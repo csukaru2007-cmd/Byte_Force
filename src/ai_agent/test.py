@@ -20,7 +20,7 @@ llm = ChatGoogleGenerativeAI(
     max_retries=1,
 )
 
-response = llm.invoke("Say 'API key works!' and nothing else.")
+response = llm.invoke("What is the capital of France?")
 
 
 def last_text(content) -> str:
