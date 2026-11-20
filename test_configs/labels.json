@@ -1,0 +1,234 @@
+{
+  "clean_weather_station": {
+    "verdict": "GOOD",
+    "findings": []
+  },
+  "clean_mqtt_led": {
+    "verdict": "GOOD",
+    "findings": []
+  },
+  "clean_oled_clock": {
+    "verdict": "GOOD",
+    "findings": []
+  },
+  "clean_webserver": {
+    "verdict": "GOOD",
+    "findings": []
+  },
+  "clean_temp_logger": {
+    "verdict": "GOOD",
+    "findings": []
+  },
+  "hall_ble_mesh": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "esp32-ble-mesh-helper@1.2.0",
+        "HALLUCINATED"
+      ]
+    ]
+  },
+  "hall_owner_pro": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "bblanchon/ArduinoJsonPro@1.0.0",
+        "HALLUCINATED"
+      ]
+    ]
+  },
+  "hall_sensor": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "adafruit/Adafruit BME290 Library@1.0.0",
+        "HALLUCINATED"
+      ]
+    ]
+  },
+  "hall_typo_json": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "ArduinoJsn@7.4.3",
+        "HALLUCINATED"
+      ]
+    ]
+  },
+  "imp_fastled_fork": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "etidbury/FastLED@3.3.3",
+        "IMPERSONATION"
+      ]
+    ]
+  },
+  "imp_wifimanager_fork": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "wnatth3/WiFiManager@2.0.16-rc.2",
+        "IMPERSONATION"
+      ]
+    ]
+  },
+  "imp_pubsub_owner_typo": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "knoleary/PubSubClient@2.8",
+        "IMPERSONATION"
+      ]
+    ]
+  },
+  "typo_neopixel": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "mbed-tomasero/Adafruit_NeoPixel@0.0.0+sha.21d6d7016965",
+        "TYPOSQUAT"
+      ]
+    ]
+  },
+  "typo_websockets": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "skaarj1989/mWebSockets@1.5.0",
+        "TYPOSQUAT"
+      ]
+    ]
+  },
+  "typo_mpu": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "jfredine/Adafruit MPU9250@1.0.0",
+        "TYPOSQUAT"
+      ]
+    ]
+  },
+  "noowner_dht": {
+    "verdict": "MEDIUM",
+    "findings": [
+      [
+        "DHT sensor library@1.4.7",
+        "NO_OWNER"
+      ]
+    ]
+  },
+  "noowner_tft": {
+    "verdict": "MEDIUM",
+    "findings": [
+      [
+        "TFT_eSPI",
+        "NO_OWNER"
+      ],
+      [
+        "TFT_eSPI",
+        "UNPINNED_VERSION"
+      ]
+    ]
+  },
+  "url_untrusted_fork": {
+    "verdict": "MEDIUM",
+    "findings": [
+      [
+        "https://github.com/someuser123/ESPAsyncWebServer.git#v3.6.0",
+        "UNTRUSTED_URL"
+      ]
+    ]
+  },
+  "url_trusted_unpinned": {
+    "verdict": "MEDIUM",
+    "findings": [
+      [
+        "https://github.com/bblanchon/ArduinoJson.git",
+        "UNPINNED_VERSION"
+      ]
+    ]
+  },
+  "unpinned_ranges": {
+    "verdict": "MEDIUM",
+    "findings": [
+      [
+        "bblanchon/ArduinoJson@^7.0.0",
+        "UNPINNED_VERSION"
+      ],
+      [
+        "knolleary/PubSubClient",
+        "UNPINNED_VERSION"
+      ]
+    ]
+  },
+  "version_not_found": {
+    "verdict": "MEDIUM",
+    "findings": [
+      [
+        "bblanchon/ArduinoJson@8.1.0",
+        "VERSION_NOT_FOUND"
+      ]
+    ]
+  },
+  "include_missing": {
+    "verdict": "MEDIUM",
+    "findings": [
+      [
+        "PubSubClient.h",
+        "UNDECLARED_INCLUDE"
+      ],
+      [
+        "FastLED.h",
+        "UNDECLARED_INCLUDE"
+      ]
+    ]
+  },
+  "include_missing_display": {
+    "verdict": "MEDIUM",
+    "findings": [
+      [
+        "Adafruit_SSD1306.h",
+        "UNDECLARED_INCLUDE"
+      ]
+    ]
+  },
+  "mixed_smart_plant": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "ArduinoJson",
+        "NO_OWNER"
+      ],
+      [
+        "ArduinoJson",
+        "UNPINNED_VERSION"
+      ],
+      [
+        "esp32-soil-moisture-pro@2.0.1",
+        "HALLUCINATED"
+      ],
+      [
+        "knolleary/PubSubClient@^2.8",
+        "UNPINNED_VERSION"
+      ],
+      [
+        "DHT.h",
+        "UNDECLARED_INCLUDE"
+      ]
+    ]
+  },
+  "mixed_dashboard": {
+    "verdict": "CRITICAL",
+    "findings": [
+      [
+        "jasonlzt/FastLED@3.5.0",
+        "IMPERSONATION"
+      ],
+      [
+        "https://github.com/tzapu/WiFiManager.git",
+        "UNPINNED_VERSION"
+      ]
+    ]
+  }
+}

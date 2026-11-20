@@ -1,0 +1,505 @@
+{
+  "_comment": "Popular ESP32/Arduino libraries and their real owners. Generated from api.registry.platformio.org (owner, repository, latest version and header files come from the registry, not typed by hand).",
+  "libraries": [
+    {
+      "name": "ArduinoJson",
+      "owner": "bblanchon",
+      "also_trusted_owners": [],
+      "github": "https://github.com/bblanchon/ArduinoJson",
+      "latest_version": "7.4.3",
+      "headers": [
+        "ArduinoJson.h",
+        "ArduinoJson.hpp",
+        "Configuration.hpp",
+        "Namespace.hpp",
+        "compatibility.hpp",
+        "version.hpp"
+      ]
+    },
+    {
+      "name": "PubSubClient",
+      "owner": "knolleary",
+      "also_trusted_owners": [],
+      "github": "https://github.com/knolleary/pubsubclient",
+      "latest_version": "2.8",
+      "headers": [
+        "PubSubClient.h"
+      ]
+    },
+    {
+      "name": "FastLED",
+      "owner": "fastled",
+      "also_trusted_owners": [],
+      "github": "https://github.com/FastLED/FastLED",
+      "latest_version": "3.10.10",
+      "headers": [
+        "FastLED.h"
+      ]
+    },
+    {
+      "name": "Adafruit NeoPixel",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit_NeoPixel",
+      "latest_version": "1.15.5",
+      "headers": [
+        "Adafruit_NeoPixel.h"
+      ]
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit-GFX-Library",
+      "latest_version": "1.13.0",
+      "headers": [
+        "Adafruit_GFX.h",
+        "Adafruit_GrayOLED.h",
+        "Adafruit_SPITFT.h",
+        "Adafruit_SPITFT_Macros.h",
+        "FreeMonoBold12pt7b.h",
+        "FreeMonoBoldOblique12pt7b.h",
+        "FreeMonoBoldOblique18pt7b.h",
+        "FreeMonoOblique18pt7b.h",
+        "FreeMonoOblique24pt7b.h",
+        "FreeSans12pt7b.h",
+        "FreeSans9pt7b.h",
+        "FreeSansBold12pt7b.h",
+        "FreeSansBold24pt7b.h",
+        "FreeSansBoldOblique12pt7b.h",
+        "FreeSansBoldOblique24pt7b.h",
+        "FreeSansOblique18pt7b.h",
+        "FreeSansOblique9pt7b.h",
+        "FreeSerif9pt7b.h",
+        "FreeSerifBold18pt7b.h",
+        "FreeSerifBold24pt7b.h",
+        "FreeSerifItalic12pt7b.h",
+        "FreeSerifItalic18pt7b.h",
+        "Org_01.h",
+        "Picopixel.h",
+        "gfxfont.h"
+      ]
+    },
+    {
+      "name": "Adafruit SSD1306",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit_SSD1306",
+      "latest_version": "2.5.17",
+      "headers": [
+        "Adafruit_SSD1306.h",
+        "splash.h"
+      ]
+    },
+    {
+      "name": "Adafruit BME280 Library",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit_BME280_Library",
+      "latest_version": "2.3.0",
+      "headers": [
+        "Adafruit_BME280.h"
+      ]
+    },
+    {
+      "name": "Adafruit BMP280 Library",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit_BMP280_Library",
+      "latest_version": "3.0.0",
+      "headers": [
+        "Adafruit_BMP280.h"
+      ]
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit_Sensor",
+      "latest_version": "1.1.15",
+      "headers": [
+        "Adafruit_Sensor.h"
+      ]
+    },
+    {
+      "name": "DHT sensor library",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/DHT-sensor-library",
+      "latest_version": "1.4.7",
+      "headers": [
+        "DHT.h",
+        "DHT_U.h"
+      ]
+    },
+    {
+      "name": "Adafruit BusIO",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit_BusIO",
+      "latest_version": "1.17.4",
+      "headers": [
+        "Adafruit_BusIO_Register.h",
+        "Adafruit_GenericDevice.h",
+        "Adafruit_I2CDevice.h",
+        "Adafruit_I2CRegister.h",
+        "Adafruit_SPIDevice.h"
+      ]
+    },
+    {
+      "name": "RTClib",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/RTClib",
+      "latest_version": "2.1.4",
+      "headers": [
+        "RTClib.h"
+      ]
+    },
+    {
+      "name": "Adafruit MPU6050",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit_MPU6050",
+      "latest_version": "2.2.9",
+      "headers": [
+        "Adafruit_MPU6050.h"
+      ]
+    },
+    {
+      "name": "ESPAsyncWebServer",
+      "owner": "esp32async",
+      "also_trusted_owners": [
+        "me-no-dev",
+        "mathieucarbou"
+      ],
+      "github": "https://github.com/ESP32Async/ESPAsyncWebServer",
+      "latest_version": "3.12.1",
+      "headers": [
+        "AsyncEventSource.h",
+        "AsyncJson.h",
+        "AsyncMessagePack.h",
+        "AsyncWebServerLogging.h",
+        "AsyncWebServerVersion.h",
+        "AsyncWebSocket.h",
+        "BackPort_SHA1Builder.h",
+        "ChunkPrint.h",
+        "ESPAsyncWebServer.h",
+        "WebAuthentication.h",
+        "WebHandlerImpl.h",
+        "WebResponseImpl.h",
+        "literals.h"
+      ]
+    },
+    {
+      "name": "AsyncTCP",
+      "owner": "esp32async",
+      "also_trusted_owners": [
+        "me-no-dev"
+      ],
+      "github": "https://github.com/ESP32Async/AsyncTCP",
+      "latest_version": "3.6.1",
+      "headers": [
+        "AsyncTCP.h",
+        "AsyncTCPLogging.h",
+        "AsyncTCPSimpleIntrusiveList.h",
+        "AsyncTCPVersion.h"
+      ]
+    },
+    {
+      "name": "WiFiManager",
+      "owner": "tzapu",
+      "also_trusted_owners": [],
+      "github": "https://github.com/tzapu/WiFiManager",
+      "latest_version": "2.0.17",
+      "headers": [
+        "WiFiManager.h",
+        "strings_en.h",
+        "wm_consts_en.h",
+        "wm_strings_en.h",
+        "wm_strings_es.h"
+      ]
+    },
+    {
+      "name": "TFT_eSPI",
+      "owner": "bodmer",
+      "also_trusted_owners": [],
+      "github": "https://github.com/Bodmer/TFT_eSPI",
+      "latest_version": "2.5.43",
+      "headers": [
+        "TFT_eSPI.h"
+      ]
+    },
+    {
+      "name": "U8g2",
+      "owner": "olikraus",
+      "also_trusted_owners": [],
+      "github": "https://github.com/olikraus/U8g2_Arduino",
+      "latest_version": "2.36.18",
+      "headers": [
+        "MUIU8g2.h",
+        "U8g2lib.h",
+        "U8x8lib.h",
+        "mui.h",
+        "mui_u8g2.h",
+        "u8g2.h",
+        "u8x8.h"
+      ]
+    },
+    {
+      "name": "OneWire",
+      "owner": "paulstoffregen",
+      "also_trusted_owners": [],
+      "github": "https://github.com/PaulStoffregen/OneWire",
+      "latest_version": "2.3.8",
+      "headers": [
+        "OneWire.h",
+        "OneWire_direct_gpio.h",
+        "OneWire_direct_regtype.h"
+      ]
+    },
+    {
+      "name": "DallasTemperature",
+      "owner": "milesburton",
+      "also_trusted_owners": [],
+      "github": "https://github.com/milesburton/Arduino-Temperature-Control-Library",
+      "latest_version": "4.0.6",
+      "headers": [
+        "DallasTemperature.h"
+      ]
+    },
+    {
+      "name": "NTPClient",
+      "owner": "arduino-libraries",
+      "also_trusted_owners": [],
+      "github": "https://github.com/arduino-libraries/NTPClient",
+      "latest_version": "3.2.1",
+      "headers": [
+        "NTPClient.h"
+      ]
+    },
+    {
+      "name": "ESP32Servo",
+      "owner": "madhephaestus",
+      "also_trusted_owners": [],
+      "github": "https://github.com/madhephaestus/ESP32Servo",
+      "latest_version": "3.2.1",
+      "headers": [
+        "ESP32Servo.h",
+        "analogWrite.h",
+        "tone.h",
+        "ESP32Tone.h",
+        "ESP32PWM.h"
+      ]
+    },
+    {
+      "name": "IRremoteESP8266",
+      "owner": "crankyoldgit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/crankyoldgit/IRremoteESP8266",
+      "latest_version": "2.9.0",
+      "headers": [
+        "IRrecv.h",
+        "IRremoteESP8266.h",
+        "IRsend.h",
+        "IRutils.h",
+        "ir_Argo.h",
+        "ir_Carrier.h",
+        "ir_Coolix.h",
+        "ir_Corona.h",
+        "ir_Ecoclim.h",
+        "ir_Eurom.h",
+        "ir_Fujitsu.h",
+        "ir_Gree.h",
+        "ir_Kelon.h",
+        "ir_LG.h",
+        "ir_Midea.h",
+        "ir_Mirage.h",
+        "ir_Mitsubishi.h",
+        "ir_MitsubishiHeavy.h",
+        "ir_Neoclima.h",
+        "ir_Panasonic.h",
+        "ir_Samsung.h",
+        "ir_Technibel.h",
+        "ir_Toshiba.h",
+        "ir_Trotec.h",
+        "ir_Vestel.h"
+      ]
+    },
+    {
+      "name": "LiquidCrystal_I2C",
+      "owner": "marcoschwartz",
+      "also_trusted_owners": [],
+      "github": "https://github.com/marcoschwartz/LiquidCrystal_I2C",
+      "latest_version": "1.1.4",
+      "headers": [
+        "LiquidCrystal_I2C.h"
+      ]
+    },
+    {
+      "name": "Blynk",
+      "owner": "blynkkk",
+      "also_trusted_owners": [],
+      "github": "https://github.com/Blynk-Technologies/blynk-library",
+      "latest_version": "1.4.0",
+      "headers": [
+        "BlynkEdgentNCP.h",
+        "BlynkMultiClient.h",
+        "BlynkSimpleArduinoNanoBLE.h",
+        "BlynkSimpleCC3000.h",
+        "BlynkSimpleEsp32.h",
+        "BlynkSimpleEsp32_NimBLE.h",
+        "BlynkSimpleEsp8266_SSL.h",
+        "BlynkSimpleEthernet.h",
+        "BlynkSimpleFishino.h",
+        "BlynkSimpleMKR1000.h",
+        "BlynkSimpleParticleSSL.h",
+        "BlynkSimpleRedBearLab_BLE_Nano.h",
+        "BlynkSimpleRedBear_Duo_BLE.h",
+        "BlynkSimpleShieldEsp8266.h",
+        "BlynkSimpleWiFiShield101.h",
+        "BlynkSimpleWiFiShield101_SSL.h",
+        "BlynkSimpleWiFly.h",
+        "BlynkSimpleWioTerminal.h",
+        "BlynkSimpleWizFi250.h",
+        "BlynkSimpleWizFi310.h",
+        "BlynkSimpleYun.h",
+        "BlynkWidgets.h",
+        "WidgetRTC.h",
+        "WidgetTerminal.h",
+        "WidgetTimeInput.h"
+      ]
+    },
+    {
+      "name": "ThingSpeak",
+      "owner": "mathworks",
+      "also_trusted_owners": [],
+      "github": "https://github.com/mathworks/thingspeak-arduino",
+      "latest_version": "2.1.1",
+      "headers": [
+        "ThingSpeak.h"
+      ]
+    },
+    {
+      "name": "MFRC522",
+      "owner": "miguelbalboa",
+      "also_trusted_owners": [],
+      "github": "https://github.com/miguelbalboa/rfid",
+      "latest_version": "1.4.12",
+      "headers": [
+        "MFRC522.h",
+        "MFRC522Extended.h",
+        "deprecated.h",
+        "require_cpp11.h"
+      ]
+    },
+    {
+      "name": "TinyGPSPlus",
+      "owner": "mikalhart",
+      "also_trusted_owners": [],
+      "github": "https://github.com/mikalhart/TinyGPSPlus",
+      "latest_version": "1.1.0",
+      "headers": [
+        "TinyGPS++.h",
+        "TinyGPSPlus.h"
+      ]
+    },
+    {
+      "name": "AccelStepper",
+      "owner": "waspinator",
+      "also_trusted_owners": [],
+      "github": "https://github.com/waspinator/AccelStepper",
+      "latest_version": "1.64",
+      "headers": [
+        "AccelStepper.h",
+        "MultiStepper.h"
+      ]
+    },
+    {
+      "name": "Bounce2",
+      "owner": "thomasfredericks",
+      "also_trusted_owners": [],
+      "github": "https://github.com/thomasfredericks/Bounce2",
+      "latest_version": "2.72",
+      "headers": [
+        "Bounce2.h"
+      ]
+    },
+    {
+      "name": "NimBLE-Arduino",
+      "owner": "h2zero",
+      "also_trusted_owners": [],
+      "github": "https://github.com/h2zero/NimBLE-Arduino",
+      "latest_version": "2.5.2",
+      "headers": [
+        "NimBLEDevice.h"
+      ]
+    },
+    {
+      "name": "WebSockets",
+      "owner": "links2004",
+      "also_trusted_owners": [],
+      "github": "https://github.com/Links2004/arduinoWebSockets",
+      "latest_version": "2.7.3",
+      "headers": [
+        "SocketIOclient.h",
+        "WebSockets.h",
+        "WebSockets4WebServer.h",
+        "WebSocketsClient.h",
+        "WebSocketsNetworkClient.h",
+        "WebSocketsNetworkClientSecure.h",
+        "WebSocketsServer.h",
+        "WebSocketsVersion.h",
+        "cdecode_inc.h",
+        "cencode_inc.h",
+        "libsha1.h"
+      ]
+    },
+    {
+      "name": "MQTT",
+      "owner": "256dpi",
+      "also_trusted_owners": [],
+      "github": "https://github.com/256dpi/arduino-mqtt",
+      "latest_version": "2.6.0",
+      "headers": [
+        "MQTT.h",
+        "MQTTClient.h",
+        "helpers.h",
+        "lwmqtt.h",
+        "packet.h"
+      ]
+    },
+    {
+      "name": "BH1750",
+      "owner": "claws",
+      "also_trusted_owners": [],
+      "github": "https://github.com/claws/BH1750",
+      "latest_version": "1.3.0",
+      "headers": [
+        "BH1750.h"
+      ]
+    },
+    {
+      "name": "Time",
+      "owner": "paulstoffregen",
+      "also_trusted_owners": [],
+      "github": "https://github.com/PaulStoffregen/Time",
+      "latest_version": "1.6.1",
+      "headers": [
+        "TimeLib.h"
+      ]
+    },
+    {
+      "name": "Adafruit MQTT Library",
+      "owner": "adafruit",
+      "also_trusted_owners": [],
+      "github": "https://github.com/adafruit/Adafruit_MQTT_Library",
+      "latest_version": "3.0.0",
+      "headers": [
+        "Adafruit_MQTT.h",
+        "Adafruit_MQTT_Client.h",
+        "Adafruit_MQTT_FONA.h"
+      ]
+    }
+  ]
+}

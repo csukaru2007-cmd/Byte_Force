@@ -1,0 +1,13 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_MPU9250.h>
+#include <Adafruit_Sensor.h>
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("running");
+}
+
+void loop() {
+  delay(1000);
+}
