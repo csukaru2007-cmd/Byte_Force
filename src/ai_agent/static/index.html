@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShipSafe Security Gate</title>
+<meta name="description" content="Agentic AI security validation for AI-generated applications: scanners + LangGraph/Gemini triage + deterministic policy.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2322c55e' d='M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+:root {
+  --bg: #0b1020; --panel: #121933; --panel-2: #18213f; --line: #26304f; --text: #e6e9f2; --muted: #8e98b8;
+  --accent: #6d8cff; --accent-2: #8b5cf6; --crit: #f43f5e; --crit-bg: rgba(244,63,94,.12);
+  --med: #f59e0b; --med-bg: rgba(245,158,11,.12); --good: #22c55e; --good-bg: rgba(34,197,94,.12);
+  --info: #94a3b8; --info-bg: rgba(148,163,184,.12); --code-bg: #0a0f1f;
+  --shadow: 0 10px 30px rgba(0,0,0,.25);
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f6fb; --panel: #ffffff; --panel-2: #f1f4fa; --line: #dfe4ef; --text: #131a2e; --muted: #5b6687;
+    --code-bg: #f6f8fc; --shadow: 0 8px 24px rgba(20,30,60,.08);
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 Inter, system-ui, sans-serif; }
+a { color: var(--accent); }
+button, input, textarea, select { font: inherit; color: inherit; }
+code, pre, .mono { font-family: var(--mono); font-size: 12.5px; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 16px 24px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand svg { width: 34px; height: 34px; }
+.brand h1 { font-size: 18px; margin: 0; letter-spacing: .3px; }
+.brand p { margin: 0; color: var(--muted); font-size: 12.5px; }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: var(--panel-2); white-space: nowrap; }
+.pill.on { color: var(--good); border-color: rgba(34,197,94,.4); }
+.pill.off { color: var(--muted); text-decoration: line-through; opacity: .75; }
+
+main { display: grid; grid-template-columns: minmax(330px, 420px) minmax(0, 1fr); gap: 20px; padding: 20px 24px 40px; max-width: 1500px; margin: 0 auto; }
+@media (max-width: 980px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 14px 16px; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.card > .hd { padding: 14px 16px 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card > .hd h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); font-weight: 600; }
+.card > .bd { padding: 14px 16px 16px; }
+.stack { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.tabs { display: flex; gap: 4px; background: var(--panel-2); padding: 4px; border-radius: 10px; border: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; background: transparent; padding: 7px 8px; border-radius: 7px; cursor: pointer; color: var(--muted); font-weight: 500; }
+.tabs button.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.pane { display: none; margin-top: 14px; }
+.pane.active { display: block; }
+
+.samples { display: grid; gap: 8px; }
+.sample { text-align: left; border: 1px solid var(--line); background: var(--panel-2); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: border-color .15s, transform .15s; }
+.sample:hover { border-color: var(--accent); }
+.sample.sel { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(109,140,255,.25) inset; }
+.sample .t { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
+.sample .d { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.exp { font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
+.link { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; font-size: 12.5px; }
+
+.filebar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.ftab { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: 4px 6px 4px 10px; cursor: pointer; font-family: var(--mono); font-size: 12px; max-width: 100%; }
+.ftab.active { border-color: var(--accent); color: var(--text); }
+.ftab .x { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 0 4px; font-size: 14px; line-height: 1; }
+.btn-sm { border: 1px dashed var(--line); background: none; border-radius: 8px; padding: 4px 10px; cursor: pointer; color: var(--muted); font-size: 12.5px; }
+.btn-sm:hover { color: var(--text); border-color: var(--accent); }
+input[type=text] { width: 100%; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; outline: none; }
+input[type=text]:focus, textarea:focus { border-color: var(--accent); }
+textarea { width: 100%; min-height: 300px; resize: vertical; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; outline: none; font-family: var(--mono); font-size: 12.5px; line-height: 1.55; tab-size: 4; white-space: pre; }
+.drop { margin-top: 8px; border: 1px dashed var(--line); border-radius: 8px; padding: 10px; text-align: center; color: var(--muted); font-size: 12.5px; }
+.drop.over { border-color: var(--accent); color: var(--text); }
+label.fl { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+.hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+pre.code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow: auto; max-height: 340px; margin: 6px 0 0; }
+
+.run-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; color: var(--muted); font-size: 13px; }
+.toggle input { display: none; }
+.toggle .sw { width: 34px; height: 20px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s; }
+.toggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.toggle input:checked + .sw { background: var(--accent); }
+.toggle input:checked + .sw::after { transform: translateX(14px); }
+.toggle input:disabled + .sw { opacity: .4; }
+.run { border: 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font-weight: 600; padding: 10px 18px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 6px 18px rgba(109,140,255,.35); }
+.run:disabled { opacity: .6; cursor: progress; }
+.spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; display: none; }
+.run:disabled .spinner { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.err { margin-top: 10px; color: var(--crit); font-size: 13px; display: none; }
+
+/* pipeline */
+.graph-wrap { overflow-x: auto; }
+svg.graph { width: 100%; min-width: 760px; height: auto; display: block; }
+.edge { fill: none; stroke: var(--line); stroke-width: 2; transition: stroke .3s; }
+.edge.lit { stroke: var(--accent); }
+.edge.dash { stroke-dasharray: 5 5; }
+.gn rect { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.5; rx: 10; transition: fill .3s, stroke .3s; }
+.gn text { fill: var(--text); font-size: 12.5px; font-weight: 600; text-anchor: middle; }
+.gn text.sub { fill: var(--muted); font-size: 10.5px; font-weight: 400; font-family: var(--mono); }
+.gn.running rect { stroke: var(--accent); fill: rgba(109,140,255,.14); animation: pulse 1.1s ease-in-out infinite; }
+.gn.done rect { stroke: var(--good); fill: rgba(34,197,94,.10); }
+.gn.error rect { stroke: var(--crit); fill: var(--crit-bg); }
+.gn.skipped rect { stroke-dasharray: 4 4; opacity: .55; }
+.gn.skipped text { opacity: .6; }
+@keyframes pulse { 50% { stroke-opacity: .35; } }
+.legend { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; margin-top: 8px; flex-wrap: wrap; }
+
+/* decision */
+.decision { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 16px; align-items: stretch; }
+@media (max-width: 760px) { .decision { grid-template-columns: 1fr; } }
+.verdict { border-radius: 12px; padding: 16px 18px; border: 1px solid var(--line); }
+.verdict .s { font-size: 28px; font-weight: 700; letter-spacing: .5px; }
+.verdict .m { color: var(--muted); margin-top: 2px; }
+.verdict.CRITICAL { background: var(--crit-bg); border-color: rgba(244,63,94,.45); } .verdict.CRITICAL .s { color: var(--crit); }
+.verdict.MEDIUM { background: var(--med-bg); border-color: rgba(245,158,11,.45); } .verdict.MEDIUM .s { color: var(--med); }
+.verdict.GOOD { background: var(--good-bg); border-color: rgba(34,197,94,.45); } .verdict.GOOD .s { color: var(--good); }
+.counts { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.count { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 76px; }
+.count b { font-size: 18px; display: block; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.count span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.reasons { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.reasons li { font-size: 13px; }
+.rule { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 5px; background: var(--panel); border: 1px solid var(--line); margin-right: 6px; }
+.ai-sum { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--accent-2); background: var(--panel); border-radius: 0 8px 8px 0; font-size: 13px; }
+.ai-sum b { color: var(--accent-2); }
+
+.ci { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--panel-2); }
+.ci h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+.job { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
+.job .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; flex: none; }
+.job .nm { font-family: var(--mono); font-size: 12.5px; }
+.job .st { margin-left: auto; font-size: 12px; color: var(--muted); }
+.job-link { width: 2px; height: 14px; background: var(--line); margin-left: 20px; }
+.ci .out { font-family: var(--mono); font-size: 12px; margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--code-bg); border: 1px solid var(--line); white-space: pre-wrap; }
+.approve { margin-top: 10px; border: 1px solid var(--med); color: var(--med); background: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 600; }
+
+/* results */
+.rtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.rtabs button { border: 0; background: none; padding: 10px 14px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; }
+.rtabs button.active { color: var(--text); border-bottom-color: var(--accent); }
+.rtabs .n { font-size: 11px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; margin-left: 4px; }
+.rpane { display: none; padding-top: 14px; }
+.rpane.active { display: block; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.chip { border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 3px 10px; cursor: pointer; font-size: 12px; color: var(--muted); }
+.chip.on { color: var(--text); border-color: var(--accent); }
+.sev { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; }
+.sev.critical, .exp.CRITICAL { color: var(--crit); background: var(--crit-bg); }
+.sev.medium, .exp.MEDIUM { color: var(--med); background: var(--med-bg); }
+.sev.info, .sev.outdated, .sev.good, .exp.GOOD { color: var(--info); background: var(--info-bg); }
+.exp.GOOD { color: var(--good); background: var(--good-bg); }
+.sev.good { color: var(--good); background: var(--good-bg); }
+.sev.error { color: var(--med); background: var(--med-bg); }
+details.f { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; background: var(--panel-2); overflow: hidden; }
+details.f > summary { list-style: none; cursor: pointer; padding: 10px 12px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+details.f > summary::-webkit-details-marker { display: none; }
+details.f .ttl { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+details.f .loc { color: var(--muted); font-family: var(--mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+details.f .tool { color: var(--muted); font-size: 12px; white-space: nowrap; }
+details.f .body { padding: 0 12px 12px; display: grid; gap: 10px; }
+.kv { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.kv span { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.box h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+.box.ai { border-left: 3px solid var(--accent-2); }
+.box.fix { border-left: 3px solid var(--good); }
+.box.pol { border-left: 3px solid var(--med); }
+.verd { font-weight: 600; }
+.verd.confirmed { color: var(--crit); } .verd.likely_false_positive { color: var(--good); } .verd.needs_review { color: var(--med); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.tbl { overflow-x: auto; }
+.md { line-height: 1.6; }
+.md table { margin: 8px 0; }
+.md code { background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
+.md blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--accent-2); color: var(--muted); }
+.toolbar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 10px; }
+.btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12.5px; }
+.btn:hover { border-color: var(--accent); }
+.empty { color: var(--muted); text-align: center; padding: 28px 10px; }
+.history { display: grid; gap: 6px; }
+.hrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--panel-2); cursor: pointer; font-size: 12.5px; text-align: left; width: 100%; }
+.hrow:hover { border-color: var(--accent); }
+.hrow .r { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hrow .w { color: var(--muted); font-size: 11.5px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="lg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#6d8cff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><path fill="url(#lg)" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><h1>ShipSafe</h1><p>Agentic security gate for AI-generated code · scanners + LangGraph/Gemini + deterministic policy</p></div>
+  </div>
+  <div class="pills" id="pills"><span class="pill">connecting…</span></div>
+</header>
+
+<main>
+  <!-- left: input -->
+  <div class="stack">
+    <section class="card">
+      <div class="hd"><h2>What to scan</h2></div>
+      <div class="bd">
+        <div class="tabs" role="tablist">
+          <button class="active" data-src="sample">Demo apps</button>
+          <button data-src="files">Your code</button>
+          <button data-src="github">GitHub repo</button>
+        </div>
+
+        <div class="pane active" id="pane-sample">
+          <div class="samples" id="samples"><div class="empty">Loading demo apps…</div></div>
+          <div id="sample-preview" class="hidden"></div>
+        </div>
+
+        <div class="pane" id="pane-files">
+          <div class="filebar" id="filebar"></div>
+          <label class="fl" for="fname">File path</label>
+          <input type="text" id="fname" spellcheck="false" autocomplete="off">
+          <label class="fl" for="fcontent">Content</label>
+          <textarea id="fcontent" spellcheck="false"></textarea>
+          <div class="drop" id="drop">Drop files here or <button class="link" id="pick">browse</button> · requirements.txt / pyproject.toml enable dependency checks
+            <input type="file" id="picker" multiple class="hidden"></div>
+        </div>
+
+        <div class="pane" id="pane-github">
+          <label class="fl" for="repo">Public repository</label>
+          <input type="text" id="repo" placeholder="https://github.com/owner/repo  or  owner/repo" spellcheck="false">
+          <label class="fl" for="ref">Branch, tag or commit (optional)</label>
+          <input type="text" id="ref" placeholder="default branch" spellcheck="false">
+          <p class="hint">The repository archive is downloaded to an isolated temp directory, scanned, then deleted. Max 25 MB / 4,000 files. Git history is not included in archives.</p>
+        </div>
+
+        <div class="run-row">
+          <label class="toggle" title="Gemini explains findings and suggests fixes; it cannot approve deployment">
+            <input type="checkbox" id="llm" checked><span class="sw"></span><span id="llm-label">Gemini triage</span>
+          </label>
+          <button class="run" id="run"><span class="spinner"></span><span id="run-label">Run security gate</span></button>
+        </div>
+        <div class="err" id="err"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="hd"><h2>Policy rules</h2><span class="pill mono" id="policy-ver"></span></div>
+      <div class="bd"><ul class="reasons" id="rules"></ul></div>
+    </section>
+
+    <section class="card">
+      <div class="hd"><h2>Recent scans</h2><button class="link" id="clear-hist">clear</button></div>
+      <div class="bd"><div class="history" id="history"><div class="empty">No scans yet.</div></div></div>
+    </section>
+  </div>
+
+  <!-- right: pipeline + results -->
+  <div class="stack">
+    <section class="card">
+      <div class="hd"><h2>LangGraph pipeline</h2><span class="pill mono" id="timer">idle</span></div>
+      <div class="bd">
+        <div class="graph-wrap"><svg class="graph" id="graph" viewBox="0 0 1080 330" role="img" aria-label="ShipSafe LangGraph workflow"></svg></div>
+        <div class="legend"><span>Evidence collectors run in parallel; the policy engine — not the LLM — makes the deployment decision.</span><span id="scan-id" class="mono"></span></div>
+      </div>
+    </section>
+
+    <section class="card hidden" id="decision-card">
+      <div class="hd"><h2>Deployment decision</h2><span class="pill mono" id="meta"></span></div>
+      <div class="bd decision">
+        <div class="verdict" id="verdict">
+          <div class="s" id="v-status"></div>
+          <div class="m" id="v-msg"></div>
+          <div class="counts" id="v-counts"></div>
+          <ul class="reasons" id="v-reasons"></ul>
+          <div class="ai-sum hidden" id="v-ai"></div>
+        </div>
+        <div class="ci">
+          <h3>Simulated GitHub Actions</h3>
+          <div class="job"><span class="ic" id="j1-ic"></span><span class="nm">shipsafe-security-check</span><span class="st" id="j1-st"></span></div>
+          <div class="job-link"></div>
+          <div class="job"><span class="ic" id="j2-ic"></span><span class="nm">deploy-demo</span><span class="st" id="j2-st"></span></div>
+          <div class="out" id="ci-out"></div>
+          <button class="approve hidden" id="approve">Approve as reviewer &amp; deploy</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card hidden" id="results-card">
+      <div class="bd">
+        <div class="rtabs" id="rtabs">
+          <button class="active" data-r="findings">Findings<span class="n" id="n-findings">0</span></button>
+          <button data-r="deps">Dependencies<span class="n" id="n-deps">0</span></button>
+          <button data-r="tools">Tools<span class="n" id="n-tools">0</span></button>
+          <button data-r="pr">PR comment</button>
+          <button data-r="json">JSON</button>
+        </div>
+        <div class="rpane active" id="r-findings">
+          <div class="filters" id="filters"></div>
+          <div id="findings"></div>
+        </div>
+        <div class="rpane" id="r-deps"><div class="tbl" id="deps"></div></div>
+        <div class="rpane" id="r-tools"><div class="tbl" id="tools"></div></div>
+        <div class="rpane" id="r-pr">
+          <div class="toolbar"><button class="btn" id="copy-md">Copy markdown</button></div>
+          <div class="md box" id="pr"></div>
+        </div>
+        <div class="rpane" id="r-json">
+          <div class="toolbar"><button class="btn" id="dl-json">Download JSON</button></div>
+          <pre class="code" id="json" style="max-height:520px"></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+let source = "sample", sampleId = "secrets", samplesData = [], health = null, lastResult = null;
+let files = store.get("ss-files", [
+  { path: "app.py", content: 'from flask import Flask, request\nimport sqlite3\n\napp = Flask(__name__)\n\n\n@app.route("/user/<user_id>")\ndef user(user_id):\n    conn = sqlite3.connect("app.db")\n    return str(conn.execute(f"SELECT * FROM users WHERE id = {user_id}").fetchall())\n' },
+  { path: "requirements.txt", content: "flask>=3.1\n" },
+]);
+let activeFile = 0;
+
+/* ---------------- graph ---------------- */
+const NODES = {
+  intake:           { x: 80,  y: 165, w: 120, label: "Intake" },
+  dependency_intel: { x: 300, y: 33,  w: 160, label: "Dependency intel" },
+  code_scan:        { x: 300, y: 99,  w: 160, label: "Code scan" },
+  secret_scan:      { x: 300, y: 165, w: 160, label: "Secret scan" },
+  vuln_audit:       { x: 300, y: 231, w: 160, label: "Vuln audit" },
+  authz_review:     { x: 300, y: 297, w: 160, label: "Authz review" },
+  normalize:        { x: 520, y: 165, w: 130, label: "Normalize" },
+  llm_triage:       { x: 700, y: 95,  w: 140, label: "Gemini triage" },
+  policy:           { x: 870, y: 165, w: 130, label: "Policy engine" },
+  report:           { x: 1010, y: 165, w: 110, label: "PR report" },
+};
+const SCANNERS = ["dependency_intel", "code_scan", "secret_scan", "vuln_audit", "authz_review"];
+const SUBTITLE = { intake: "repo / files", dependency_intel: "PyPI signals", code_scan: "Bandit · Semgrep", secret_scan: "Gitleaks · detect-secrets",
+  vuln_audit: "pip-audit · OSV", authz_review: "route AST checks", normalize: "dedupe", llm_triage: "advisory only", policy: "deterministic", report: "markdown" };
+const EDGES = [
+  ...SCANNERS.map((s) => ["intake", s]), ...SCANNERS.map((s) => [s, "normalize"]),
+  ["normalize", "llm_triage"], ["llm_triage", "policy"], ["normalize", "policy", "dash"], ["policy", "report"],
+];
+function drawGraph() {
+  const H = 42, svg = $("#graph");
+  let s = "";
+  for (const [a, b, kind] of EDGES) {
+    const A = NODES[a], B = NODES[b];
+    const x1 = A.x + A.w / 2, y1 = A.y, x2 = B.x - B.w / 2, y2 = B.y, mx = (x1 + x2) / 2;
+    let d = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+    if (kind === "dash") d = `M${x1},${y1 + 8} C${x1 + 70},${y1 + 70} ${x2 - 70},${y2 + 70} ${x2},${y2 + 8}`;
+    s += `<path class="edge ${kind || ""}" data-a="${a}" data-b="${b}" d="${d}"/>`;
+  }
+  for (const [id, n] of Object.entries(NODES)) {
+    s += `<g class="gn" id="g-${id}"><rect x="${n.x - n.w / 2}" y="${n.y - H / 2}" width="${n.w}" height="${H}"/>` +
+      `<text x="${n.x}" y="${n.y - 3}">${n.label}</text><text class="sub" x="${n.x}" y="${n.y + 12}" id="gs-${id}">${SUBTITLE[id]}</text></g>`;
+  }
+  svg.innerHTML = s;
+}
+function setNode(id, state, sub) {
+  const g = $(`#g-${id}`); if (!g) return;
+  g.classList.remove("running", "done", "error", "skipped");
+  if (state) g.classList.add(state);
+  if (sub !== undefined) $(`#gs-${id}`).textContent = sub;
+  if (state === "done" || state === "running") $$(`.edge[data-b="${id}"]`).forEach((e) => {
+    const a = $(`#g-${e.dataset.a}`); if (a && a.classList.contains("done")) e.classList.add("lit");
+  });
+}
+function resetGraph() {
+  for (const id in NODES) setNode(id, null, SUBTITLE[id]);
+  $$(".edge").forEach((e) => e.classList.remove("lit"));
+}
+
+/* ---------------- input panes ---------------- */
+$$(".tabs button").forEach((b) => b.addEventListener("click", () => {
+  source = b.dataset.src;
+  $$(".tabs button").forEach((x) => x.classList.toggle("active", x === b));
+  $$(".pane").forEach((p) => p.classList.toggle("active", p.id === `pane-${source}`));
+}));
+
+function renderSamples() {
+  $("#samples").innerHTML = samplesData.map((s) => `
+    <div class="sample ${s.id === sampleId ? "sel" : ""}" data-id="${esc(s.id)}" role="button" tabindex="0">
+      <div class="t"><span>${esc(s.title)}</span><span class="exp ${esc(s.expected.split(" ")[0])}">expect ${esc(s.expected)}</span></div>
+      <div class="d">${esc(s.description)}</div>
+      <button class="link" data-view="${esc(s.id)}">${s.id === sampleId && !$("#sample-preview").classList.contains("hidden") ? "hide code" : "view code"}</button>
+      <button class="link" data-edit="${esc(s.id)}" style="margin-left:10px">edit a copy</button>
+    </div>`).join("");
+}
+$("#samples").addEventListener("click", (e) => {
+  const view = e.target.closest("[data-view]"), edit = e.target.closest("[data-edit]"), card = e.target.closest(".sample");
+  if (!card) return;
+  if (edit) {
+    const s = samplesData.find((x) => x.id === edit.dataset.edit);
+    files = Object.entries(s.files).map(([path, content]) => ({ path, content })); activeFile = 0; renderFiles(); saveFiles();
+    $('.tabs button[data-src="files"]').click(); return;
+  }
+  const prev = $("#sample-preview");
+  if (view) {
+    const open = !prev.classList.contains("hidden") && sampleId === view.dataset.view;
+    sampleId = view.dataset.view;
+    if (open) prev.classList.add("hidden");
+    else {
+      const s = samplesData.find((x) => x.id === sampleId);
+      prev.innerHTML = Object.entries(s.files).map(([p, c]) => `<div class="hint mono">${esc(p)}</div><pre class="code">${esc(c)}</pre>`).join("");
+      prev.classList.remove("hidden");
+    }
+  } else { sampleId = card.dataset.id; prev.classList.add("hidden"); }
+  renderSamples();
+});
+
+function saveFiles() { store.set("ss-files", files); }
+function renderFiles() {
+  $("#filebar").innerHTML = files.map((f, i) =>
+    `<span class="ftab ${i === activeFile ? "active" : ""}" data-i="${i}">${esc(f.path || "untitled")}<button class="x" data-del="${i}" title="Remove">×</button></span>`
+  ).join("") + `<button class="btn-sm" id="addf">+ file</button>`;
+  const f = files[activeFile] || { path: "", content: "" };
+  $("#fname").value = f.path; $("#fcontent").value = f.content;
+}
+$("#filebar").addEventListener("click", (e) => {
+  if (e.target.id === "addf") { files.push({ path: `file${files.length + 1}.py`, content: "" }); activeFile = files.length - 1; }
+  else if (e.target.dataset.del !== undefined) { files.splice(+e.target.dataset.del, 1); if (!files.length) files.push({ path: "app.py", content: "" }); activeFile = Math.min(activeFile, files.length - 1); }
+  else if (e.target.closest(".ftab")) activeFile = +e.target.closest(".ftab").dataset.i;
+  renderFiles(); saveFiles();
+});
+$("#fname").addEventListener("input", (e) => { files[activeFile].path = e.target.value; saveFiles(); $(`.ftab[data-i="${activeFile}"]`).firstChild.textContent = e.target.value || "untitled"; });
+$("#fcontent").addEventListener("input", (e) => { files[activeFile].content = e.target.value; saveFiles(); });
+$("#fcontent").addEventListener("keydown", (e) => {
+  if (e.key !== "Tab") return; e.preventDefault();
+  const t = e.target, s = t.selectionStart; t.setRangeText("    ", s, t.selectionEnd, "end"); t.dispatchEvent(new Event("input"));
+});
+async function addUploads(list) {
+  for (const file of list) {
+    if (file.size > 500000) continue;
+    const text = await file.text();
+    const path = file.webkitRelativePath || file.name;
+    const i = files.findIndex((f) => f.path === path);
+    if (i >= 0) files[i].content = text; else files.push({ path, content: text });
+  }
+  files = files.filter((f) => f.path && (f.content || files.length === 1));
+  activeFile = files.length - 1; renderFiles(); saveFiles();
+}
+$("#pick").addEventListener("click", () => $("#picker").click());
+$("#picker").addEventListener("change", (e) => addUploads(e.target.files));
+const drop = $("#drop");
+["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => addUploads(e.dataTransfer.files));
+
+/* ---------------- health ---------------- */
+async function loadHealth() {
+  try {
+    health = await (await fetch("/api/health")).json();
+    const t = health.tools;
+    const pill = (name, on, title = "") => `<span class="pill ${on ? "on" : "off"}" title="${esc(title)}">${esc(name)}</span>`;
+    $("#pills").innerHTML = pill(health.llm.configured ? `Gemini · ${health.llm.model}` : "Gemini off", health.llm.configured,
+        health.llm.configured ? "LLM triage enabled" : "Set GOOGLE_API_KEY on the server to enable") +
+      Object.entries(t).map(([k, v]) => pill(k, v, v ? "available" : "not available in this runtime")).join("");
+    if (!health.llm.configured) { $("#llm").checked = false; $("#llm").disabled = true; $("#llm-label").textContent = "Gemini triage (no API key)"; }
+    $("#policy-ver").textContent = health.policy_version;
+    $("#rules").innerHTML = health.policy_rules.map((r) => `<li><span class="rule">${esc(r.id)}</span>${esc(r.text)}</li>`).join("");
+  } catch { $("#pills").innerHTML = `<span class="pill">backend unreachable</span>`; }
+}
+async function loadSamples() {
+  try { samplesData = await (await fetch("/api/samples")).json(); renderSamples(); }
+  catch { $("#samples").innerHTML = `<div class="empty">Could not load demo apps.</div>`; }
+}
+
+/* ---------------- scan ---------------- */
+let timerId = null;
+function startTimer() {
+  const t0 = performance.now(); clearInterval(timerId);
+  timerId = setInterval(() => { $("#timer").textContent = `${((performance.now() - t0) / 1000).toFixed(1)} s`; }, 100);
+}
+function body() {
+  const llm = $("#llm").checked;
+  if (source === "sample") return { source, sample: sampleId, llm };
+  if (source === "github") return { source, repo: $("#repo").value.trim(), ref: $("#ref").value.trim() || null, llm };
+  return { source: "files", files: files.filter((f) => f.path.trim()), llm };
+}
+function showError(msg) { const e = $("#err"); e.textContent = msg; e.style.display = msg ? "block" : "none"; }
+
+function onEvent(ev) {
+  if (ev.event === "scan") $("#scan-id").textContent = `scan ${ev.scan_id}`;
+  else if (ev.event === "start") setNode(ev.node, "running");
+  else if (ev.event === "end") {
+    setNode(ev.node, ev.status === "ok" ? "done" : "error", `${ev.summary || ev.status} · ${ev.ms < 1000 ? ev.ms + " ms" : (ev.ms / 1000).toFixed(1) + " s"}`);
+    if (ev.node === "policy" && !$("#g-llm_triage").classList.contains("done")) setNode("llm_triage", "skipped", "skipped");
+    if (ev.node === "policy") $$('.edge[data-a="normalize"][data-b="policy"]').forEach((e) => { if (!$("#g-llm_triage").classList.contains("done")) e.classList.add("lit"); });
+  } else if (ev.event === "result") render(ev.result, true);
+  else if (ev.event === "error") throw new Error(ev.message);
+}
+
+async function runScan() {
+  showError(""); const req = body();
+  if (req.source === "github" && !req.repo) return showError("Enter a GitHub repository.");
+  if (req.source === "files" && !req.files.length) return showError("Add at least one file.");
+  $("#run").disabled = true; $("#run-label").textContent = "Scanning…";
+  resetGraph(); startTimer(); setNode("intake", "running");
+  let gotResult = false;
+  try {
+    const res = await fetch("/api/scan/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req) });
+    if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(typeof j.detail === "string" ? j.detail : `HTTP ${res.status}`); }
+    const reader = res.body.getReader(), dec = new TextDecoder(); let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (!line) continue;
+        const ev = JSON.parse(line); if (ev.event === "result") gotResult = true; onEvent(ev);
+      }
+    }
+    if (buf.trim()) { const ev = JSON.parse(buf); if (ev.event === "result") gotResult = true; onEvent(ev); }
+    if (!gotResult) throw new Error("The scan ended without a result (the serverless function may have timed out).");
+  } catch (e) {
+    showError(e.message || String(e));
+    $$(".gn.running").forEach((g) => g.classList.replace("running", "error"));
+  } finally {
+    clearInterval(timerId); $("#run").disabled = false; $("#run-label").textContent = "Run security gate";
+  }
+}
+$("#run").addEventListener("click", runScan);
+
+/* ---------------- render result ---------------- */
+const STATUS_MSG = { CRITICAL: "Deployment blocked — the security check fails and the deploy job is skipped.",
+  MEDIUM: "Review required — deployment waits for an authorised reviewer.", GOOD: "No blocking findings — deployment may proceed." };
+let filt = { sev: new Set(["critical", "medium"]), src: "all" };
+
+function render(r, fresh) {
+  lastResult = r;
+  const d = r.decision;
+  if (!fresh) { // replaying from history: paint graph as complete
+    resetGraph(); for (const id in NODES) setNode(id, "done", r.timings_ms[id] !== undefined ? `${r.timings_ms[id]} ms` : "");
+    if (r.timings_ms.llm_triage === undefined) setNode("llm_triage", "skipped", "skipped");
+    $("#timer").textContent = `${r.elapsed_seconds} s`; $("#scan-id").textContent = `scan ${r.scan_id}`;
+  } else $("#timer").textContent = `${r.elapsed_seconds} s`;
+  $("#decision-card").classList.remove("hidden"); $("#results-card").classList.remove("hidden");
+  $("#verdict").className = `verdict ${d.status}`;
+  $("#v-status").textContent = d.status;
+  $("#v-msg").textContent = STATUS_MSG[d.status];
+  $("#meta").textContent = `${r.repository}${r.commit_sha ? " @ " + r.commit_sha.slice(0, 7) : ""} · ${r.files.length} files · ${r.elapsed_seconds}s`;
+  $("#v-counts").innerHTML = ["critical", "medium", "info"].map((k) => `<div class="count"><b>${d.counts[k]}</b><span>${k}</span></div>`).join("") +
+    `<div class="count"><b>${d.llm_overrides}</b><span>policy notes</span></div>`;
+  $("#v-reasons").innerHTML = d.reasons.map((x) => `<li><span class="rule">${esc(x.rule)}</span>${esc(x.message)}</li>`).join("") +
+    (d.coverage_gaps.length ? `<li class="hint">Not available in this runtime: ${esc(d.coverage_gaps.join(", "))}</li>` : "");
+  const ai = $("#v-ai");
+  if (r.llm.status === "ok" && r.llm.summary) { ai.innerHTML = `<b>Gemini (${esc(r.llm.model)}):</b> ${esc(r.llm.summary)}`; ai.classList.remove("hidden"); }
+  else if (r.llm.status === "error") { ai.innerHTML = `<b>Gemini error:</b> ${esc(r.llm.reason)} — the policy decided from scanner evidence alone.`; ai.classList.remove("hidden"); }
+  else ai.classList.add("hidden");
+  renderCI(d.status);
+
+  $("#n-findings").textContent = r.findings.length;
+  $("#n-deps").textContent = r.packages.length;
+  $("#n-tools").textContent = r.tools.length;
+  filt = { sev: new Set(r.findings.some((f) => f.final_severity !== "info") ? ["critical", "medium"] : ["critical", "medium", "info"]), src: "all" };
+  renderFilters(); renderFindings(); renderDeps(); renderTools();
+  $("#pr").innerHTML = window.marked && window.DOMPurify ? DOMPurify.sanitize(marked.parse(r.report_markdown)) : `<pre>${esc(r.report_markdown)}</pre>`;
+  $("#json").textContent = JSON.stringify(r, null, 2);
+  if (fresh) saveHistory(r);
+}
+
+function renderCI(status) {
+  const j1 = { CRITICAL: ["✕", "var(--crit)", "failed (exit 1)"], MEDIUM: ["!", "var(--med)", "needs review (exit 2)"], GOOD: ["✓", "var(--good)", "passed (exit 0)"] }[status];
+  $("#j1-ic").textContent = j1[0]; $("#j1-ic").style.background = j1[1]; $("#j1-st").textContent = j1[2];
+  const setJ2 = (ic, bg, st, out) => { $("#j2-ic").textContent = ic; $("#j2-ic").style.background = bg; $("#j2-st").textContent = st; $("#ci-out").textContent = out; };
+  $("#approve").classList.toggle("hidden", status !== "MEDIUM");
+  if (status === "GOOD") setJ2("✓", "var(--good)", "ran", "$ ./deploy.sh\nDemo application deployed ✔");
+  else if (status === "CRITICAL") setJ2("–", "var(--info)", "skipped", "needs: shipsafe-security-check\nJob skipped: required check failed. Nothing was deployed.");
+  else setJ2("⏸", "var(--med)", "waiting", "environment: production (required reviewers)\nWaiting for an authorised reviewer to approve…");
+}
+$("#approve").addEventListener("click", () => {
+  $("#approve").classList.add("hidden");
+  $("#j2-ic").textContent = "✓"; $("#j2-ic").style.background = "var(--good)"; $("#j2-st").textContent = "ran (approved)";
+  $("#ci-out").textContent = "Approved by reviewer — findings acknowledged.\n$ ./deploy.sh\nDemo application deployed ✔";
+});
+
+function renderFilters() {
+  const r = lastResult, srcs = ["all", ...new Set(r.findings.map((f) => f.source))];
+  const n = (k) => r.findings.filter((f) => f.final_severity === k).length;
+  $("#filters").innerHTML = ["critical", "medium", "info"].map((k) => `<button class="chip ${filt.sev.has(k) ? "on" : ""}" data-sev="${k}">${k} · ${n(k)}</button>`).join("") +
+    `<span style="width:10px"></span>` + srcs.map((s) => `<button class="chip ${filt.src === s ? "on" : ""}" data-src="${esc(s)}">${esc(s)}</button>`).join("");
+}
+$("#filters").addEventListener("click", (e) => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  if (b.dataset.sev) { filt.sev.has(b.dataset.sev) ? filt.sev.delete(b.dataset.sev) : filt.sev.add(b.dataset.sev); }
+  else filt.src = b.dataset.src;
+  renderFilters(); renderFindings();
+});
+
+function renderFindings() {
+  const list = lastResult.findings.filter((f) => filt.sev.has(f.final_severity) && (filt.src === "all" || f.source === filt.src));
+  if (!list.length) { $("#findings").innerHTML = `<div class="empty">${lastResult.findings.length ? "No findings match these filters." : "No findings. 🎉"}</div>`; return; }
+  $("#findings").innerHTML = list.map((f) => {
+    const changed = f.final_severity !== f.severity ? ` <span class="hint">(scanner: ${esc(f.severity)})</span>` : "";
+    const a = f.llm;
+    const det = f.details || {};
+    const extras = [];
+    if (det.secret_preview) extras.push(`<span>secret ${esc(det.secret_preview)}</span>`);
+    if (det.in_history) extras.push(`<span>in git history</span>`);
+    if (det.fix_version) extras.push(`<span>fixed in ${esc(det.fix_version)}</span>`);
+    if (det.similar_to) extras.push(`<span>similar to ${esc(det.similar_to)}</span>`);
+    const adv = (det.advisories || []).map((v) => `<li><a href="${esc(v.url)}" target="_blank" rel="noopener">${esc((v.aliases || []).find((x) => x.startsWith("CVE-")) || v.id)}</a> <span class="hint">${esc(v.severity)}</span> ${esc(v.summary)}</li>`).join("");
+    return `<details class="f">
+      <summary><span class="sev ${esc(f.final_severity)}">${esc(f.final_severity)}</span>
+        <span style="min-width:0"><div class="ttl">${esc(f.title)}${changed}</div><div class="loc">${esc(f.file)}${f.line ? ":" + f.line : ""}</div></span>
+        <span class="tool">${esc(f.tool)}</span></summary>
+      <div class="body">
+        <div class="kv"><span>${esc(f.source)}</span><span>${esc(f.rule_id)}</span><span>${esc(f.category)}</span>${f.cwe.map((c) => `<span>${esc(c)}</span>`).join("")}<span>confidence ${esc(f.confidence)}</span>${extras.join("")}</div>
+        <div class="box">${esc(f.message)}</div>
+        ${adv ? `<div class="box"><h4>Advisories</h4><ul style="margin:0;padding-left:18px">${adv}</ul></div>` : ""}
+        ${f.context ? `<pre class="code">${esc(f.context)}</pre>` : ""}
+        ${a ? `<div class="box ai"><h4>Gemini assessment</h4><span class="verd ${esc(a.verdict)}">${esc(a.verdict.replaceAll("_", " "))}</span> · ${Math.round(a.confidence * 100)}% — ${esc(a.explanation)}</div>` : ""}
+        ${(a && a.suggested_fix) || f.remediation ? `<div class="box fix"><h4>Suggested fix</h4><div class="mono" style="white-space:pre-wrap">${esc((a && a.suggested_fix) || f.remediation)}</div></div>` : ""}
+        ${f.policy_note ? `<div class="box pol"><h4>Policy</h4>${esc(f.policy_note)}</div>` : ""}
+        ${f.references.length ? `<div class="kv">${f.references.map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, "").slice(0, 60))}</a>`).join(" · ")}</div>` : ""}
+      </div></details>`;
+  }).join("");
+}
+
+function renderDeps() {
+  const p = lastResult.packages;
+  if (!p.length) { $("#deps").innerHTML = `<div class="empty">No Python dependency manifest (requirements*.txt / pyproject.toml) found.</div>`; return; }
+  const num = (v) => v == null ? "–" : Number(v).toLocaleString();
+  $("#deps").innerHTML = `<table><thead><tr><th>Package</th><th>Verdict</th><th>Exists</th><th>Latest</th><th class="num">Age (days)</th><th class="num">Downloads / mo</th><th>Signals</th></tr></thead><tbody>` +
+    p.map((x) => `<tr><td class="mono">${esc(x.dependency.name)}${esc(x.dependency.specifier)}</td><td><span class="sev ${esc(x.severity)}">${esc(x.severity)}</span></td>
+      <td>${x.exists === true ? "yes" : x.exists === false ? "<b style='color:var(--crit)'>no</b>" : "?"}</td><td class="mono">${esc(x.latest_version || "–")}</td>
+      <td class="num">${num(x.age_days)}</td><td class="num">${num(x.downloads_last_month)}</td>
+      <td>${x.signals.map((s) => `<div title="${esc(s.message)}"><span class="mono" style="font-size:11.5px">${esc(s.code)}</span>${x.similar_to && s.code !== "OUTDATED_VERSION" ? "" : ""}</div>`).join("") || "–"}${x.similar_to ? `<div class="hint">did you mean <b>${esc(x.similar_to)}</b>?</div>` : ""}</td></tr>`).join("") + `</tbody></table>`;
+}
+
+function renderTools() {
+  const t = lastResult.tools, tm = lastResult.timings_ms;
+  const col = { ok: "var(--good)", error: "var(--crit)", skipped: "var(--muted)" };
+  $("#tools").innerHTML = `<table><thead><tr><th>Tool</th><th>Status</th><th class="num">Findings</th><th class="num">Time</th><th>Notes</th></tr></thead><tbody>` +
+    t.map((x) => `<tr><td class="mono">${esc(x.tool)}${x.version ? ` <span class="hint">${esc(x.version)}</span>` : ""}</td><td style="color:${col[x.status] || "inherit"}">${esc(x.status)}</td>
+      <td class="num">${x.findings ?? "–"}</td><td class="num">${x.duration_seconds != null ? x.duration_seconds + " s" : "–"}</td><td class="hint">${esc((x.errors || []).join("; ").slice(0, 240))}</td></tr>`).join("") +
+    `</tbody></table><p class="hint">Graph node timings: ${Object.entries(tm).map(([k, v]) => `${esc(k)} ${v} ms`).join(" · ")}</p>`;
+}
+
+$$("#rtabs button").forEach((b) => b.addEventListener("click", () => {
+  $$("#rtabs button").forEach((x) => x.classList.toggle("active", x === b));
+  $$(".rpane").forEach((p) => p.classList.toggle("active", p.id === `r-${b.dataset.r}`));
+}));
+$("#copy-md").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(lastResult.report_markdown); $("#copy-md").textContent = "Copied!"; setTimeout(() => ($("#copy-md").textContent = "Copy markdown"), 1500); } catch {}
+});
+$("#dl-json").addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(lastResult, null, 2)], { type: "application/json" }));
+  a.download = `shipsafe-${lastResult.scan_id}.json`; a.click(); URL.revokeObjectURL(a.href);
+});
+
+/* ---------------- history ---------------- */
+function saveHistory(r) {
+  const h = store.get("ss-history", []).filter((x) => x.scan_id !== r.scan_id);
+  h.unshift(r); store.set("ss-history", h.slice(0, 6)); renderHistory();
+}
+function renderHistory() {
+  const h = store.get("ss-history", []);
+  $("#history").innerHTML = h.length ? h.map((r, i) => `<button class="hrow" data-i="${i}"><span class="sev ${r.decision.status === "GOOD" ? "good" : r.decision.status.toLowerCase()}">${esc(r.decision.status)}</span>
+    <span class="r">${esc(r.repository)}</span><span class="w">${r.findings.length} findings</span></button>`).join("") : `<div class="empty">No scans yet.</div>`;
+}
+$("#history").addEventListener("click", (e) => { const b = e.target.closest(".hrow"); if (b) render(store.get("ss-history", [])[+b.dataset.i], false); });
+$("#clear-hist").addEventListener("click", () => { store.set("ss-history", []); renderHistory(); });
+
+drawGraph(); renderFiles(); renderHistory(); loadHealth(); loadSamples();
+</script>
+</body>
+</html>
