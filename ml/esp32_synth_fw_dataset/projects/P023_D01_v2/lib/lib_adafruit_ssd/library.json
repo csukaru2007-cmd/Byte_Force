@@ -1,0 +1,12 @@
+{
+  "name": "Adafruit-SSD1306",
+  "version": "1.0.0",
+  "description": "Simple analog temperature helper",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example-dev/Adafruit-SSD1306"
+  },
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

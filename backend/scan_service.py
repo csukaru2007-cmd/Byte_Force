@@ -31,11 +31,15 @@ from backend.platformio.registry_client import RegistryClient
 from backend.project_loader import (ProjectError, cleanup, locate_project_root, safe_extract,
                                     validate_project)
 from backend.risk_engine import assess_risk
+from backend.baseline_client import baseline_status, run_baseline
+from backend.decision import final_decision, main_engine_decision
+from backend.ml.predict import ml_status, predict_project
 from backend.security_engine.engine import run_security_engine
 from backend.security_engine.rule_loader import hardware_rules, package_rules, security_rules
 
 VERSION = "2.0.0"
-STAGES = ["extracting", "dependencies", "registry", "parsing", "hardware", "security", "risk", "completed"]
+STAGES = ["extracting", "dependencies", "registry", "parsing", "hardware", "security", "risk", "ml", "baseline",
+          "completed"]
 DISCLAIMER = ("ShipSafe reports observable indicators with evidence. A finding is not proof of malicious intent, "
               "and the absence of findings is not proof of safety.")
 
@@ -141,6 +145,11 @@ def analyse_project(root: Path, *, chip: str | None, project_name: str, work_dir
     registry_ok = not any(r["metadata_status"] == "unavailable" for r in package_results)
     risk = assess_risk(all_findings, issues, hardware_status=hardware.status, registry_available=registry_ok,
                        files_parsed=len(ast.parse_results))
+    finding_dicts = [f.to_dict() for f in all_findings]
+    main_decision = main_engine_decision(finding_dicts, risk, completed=True)
+    on_stage("ml")
+    ml = _guard("ml", issues, predict_project, root, package_results,
+                fallback={"status": "unavailable", "label": None, "reason": "ML stage crashed"})
 
     parser_errors = sum(r.error_count for r in ast.parse_results)
     return {
@@ -168,7 +177,10 @@ def analyse_project(root: Path, *, chip: str | None, project_name: str, work_dir
         "hardware_analysis": {k: v for k, v in hardware.to_dict().items() if k != "findings"},
         "security_results": [f.to_dict() for f in security_findings],
         "security_analysis": security_summary,
-        "findings": [f.to_dict() for f in all_findings],
+        "findings": finding_dicts,
+        "main_engine_decision": main_decision,
+        "ml_prediction": ml,
+        "decision": final_decision(main_decision, ml),
         "errors": [i.to_dict() for i in issues],
         "risk_assessment": risk,
         "analysis": {
@@ -185,7 +197,8 @@ def available_profiles() -> dict:
 
 
 def health_info() -> dict:
-    status = {"status": "ok", "version": VERSION, "clang": clang_status()}
+    status = {"status": "ok", "version": VERSION, "clang": clang_status(), "ml": ml_status(),
+              "baseline": baseline_status()}
     try:
         status["rules"] = {"package": len(package_rules().rules), "hardware": len(hardware_rules().rules),
                            "security": len(security_rules().rules)}
@@ -201,7 +214,8 @@ def health_info() -> dict:
 def run_scan_job(record: ScanRecord, zip_path: Path, work_dir: Path, *, chip: str | None,
                  project_name: str, demo: bool = False, keep_files: bool = False,
                  registry_factory: Callable[[], RegistryClient] | None = None,
-                 registry_offline: bool = False, report_dir: Path | None = None) -> None:
+                 registry_offline: bool = False, report_dir: Path | None = None,
+                 run_baseline_scan: bool = True) -> None:
     """Background job. Always cleans up the work folder (unless keep_files for debugging)."""
     started = time.monotonic()
     record.status, record.stage = "running", "extracting"
@@ -217,6 +231,14 @@ def run_scan_job(record: ScanRecord, zip_path: Path, work_dir: Path, *, chip: st
         registry = registry_factory() if registry_factory else RegistryClient(offline=registry_offline)
         result = analyse_project(root, chip=chip, project_name=project_name, work_dir=work_dir,
                                  registry=registry, on_stage=on_stage)
+        if run_baseline_scan:
+            on_stage("baseline")
+            try:
+                result["baseline"] = run_baseline(zip_path.read_bytes(), f"{project_name}.zip")
+            except Exception as error:  # noqa: BLE001 - the baseline must never break the scan
+                result["baseline"] = {"status": "unavailable", "reason": f"Baseline crashed: {error}"}
+        else:
+            result["baseline"] = {"status": "skipped", "reason": "Baseline comparison not requested."}
         if extraction.skipped:
             result["errors"].insert(0, ScanIssue(
                 "upload", f"{len(extraction.skipped)} archive entries were not extracted for safety.",
@@ -236,6 +258,11 @@ def run_scan_job(record: ScanRecord, zip_path: Path, work_dir: Path, *, chip: st
     except Exception as error:  # noqa: BLE001 - report any crash instead of losing the scan
         record.status, record.error = "failed", f"Internal error: {type(error).__name__}: {error}"
     finally:
+        if record.status == "failed":
+            main_decision = main_engine_decision([], None, completed=False)
+            record.result = {"decision": final_decision(main_decision, {"status": "unavailable",
+                                                                        "reason": "scan failed"}),
+                             "main_engine_decision": main_decision}
         record.finished_at = utc_now()
         if not keep_files:
             cleanup(work_dir)

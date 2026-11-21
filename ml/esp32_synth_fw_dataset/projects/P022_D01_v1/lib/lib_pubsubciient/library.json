@@ -1,0 +1,8 @@
+{
+  "name": "PubSubCIient",
+  "version": "1.0.0",
+  "description": "Simple analog temperature helper",
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

@@ -1,0 +1,13 @@
+[
+  {
+    "name": "NewPing",
+    "publisher": "Tim Eckel",
+    "publisher_verified": true,
+    "downloads": 650000,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.4.2",
+    "has_author": true,
+    "vendored": false
+  }
+]

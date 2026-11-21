@@ -1,0 +1,13 @@
+[
+  {
+    "name": "ArduinoJsonn",
+    "publisher": "unknown-dev",
+    "publisher_verified": false,
+    "downloads": 303,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.0.0",
+    "has_author": false,
+    "vendored": false
+  }
+]

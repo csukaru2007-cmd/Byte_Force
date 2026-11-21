@@ -1,0 +1,13 @@
+[
+  {
+    "name": "adc_helper3",
+    "publisher": "example-dev",
+    "publisher_verified": false,
+    "downloads": 1719,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.0.0",
+    "has_author": true,
+    "vendored": true
+  }
+]

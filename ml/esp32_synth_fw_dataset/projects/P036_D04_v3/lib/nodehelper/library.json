@@ -1,0 +1,11 @@
+{
+  "name": "nodehelper",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Example Dev"
+    }
+  ],
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

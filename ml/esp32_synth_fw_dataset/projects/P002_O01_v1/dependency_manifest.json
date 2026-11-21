@@ -1,0 +1,13 @@
+[
+  {
+    "name": "ESP Async WebServer",
+    "publisher": "me-no-dev",
+    "publisher_verified": true,
+    "downloads": 1200000,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.4.2",
+    "has_author": true,
+    "vendored": false
+  }
+]

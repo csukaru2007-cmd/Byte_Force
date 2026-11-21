@@ -1,0 +1,13 @@
+[
+  {
+    "name": "pidlite",
+    "publisher": "example-dev",
+    "publisher_verified": false,
+    "downloads": 174,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "2.1.1",
+    "has_author": true,
+    "vendored": true
+  }
+]

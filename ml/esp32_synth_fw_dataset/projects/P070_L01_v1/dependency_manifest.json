@@ -1,0 +1,24 @@
+[
+  {
+    "name": "DHT sensor library",
+    "publisher": "Adafruit",
+    "publisher_verified": true,
+    "downloads": 2400000,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.4.2",
+    "has_author": true,
+    "vendored": false
+  },
+  {
+    "name": "ArduinoJson",
+    "publisher": "bblanchon",
+    "publisher_verified": true,
+    "downloads": 6000000,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.4.2",
+    "has_author": true,
+    "vendored": false
+  }
+]

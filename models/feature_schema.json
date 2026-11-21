@@ -1,0 +1,62 @@
+{
+  "features": [
+    "f_ota_present",
+    "f_auth_present",
+    "f_hash_check",
+    "f_signature_check",
+    "f_https_used",
+    "f_http_plain_url",
+    "f_version_check",
+    "f_exec_call",
+    "f_shell_true",
+    "f_eval_exec",
+    "f_decode_obfuscation",
+    "f_external_input",
+    "f_input_validation",
+    "f_wifi_cred_read",
+    "f_outbound_post",
+    "f_build_hook_exec",
+    "f_mqtt_auth",
+    "f_open_ota_port",
+    "f_sensor_code",
+    "f_motor_camera_oled",
+    "d_n_deps",
+    "d_any_unverified",
+    "d_min_log_downloads",
+    "d_any_incomplete_meta",
+    "d_any_vendored",
+    "d_min_name_edit_dist",
+    "d_name_lookalike"
+  ],
+  "classes": [
+    "GREEN",
+    "RED",
+    "YELLOW"
+  ],
+  "model": "RandomForestClassifier",
+  "params": {
+    "n_estimators": 300,
+    "max_depth": null,
+    "min_samples_leaf": 1,
+    "class_weight": "balanced",
+    "random_state": 42
+  },
+  "sklearn_version": "1.9.1",
+  "trained_at": "2026-11-21T05:54:26+00:00",
+  "dataset": "ml/esp32_synth_fw_dataset (100 synthetic projects, synthetic labels)",
+  "excluded_columns": [
+    "project_id",
+    "scenario_id",
+    "category",
+    "scenario",
+    "label",
+    "label_id",
+    "variant",
+    "language",
+    "split",
+    "edge_case",
+    "n_files",
+    "rationale",
+    "loc"
+  ]
+}

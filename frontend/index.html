@@ -7,205 +7,65 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <h1 class="wordmark" aria-label="ShipSafe">SHIP<span>SAFE</span></h1>
-      <p class="tagline">Explainable security analysis for embedded systems and firmware.</p>
-    </div>
-    <div id="health" class="health" title="Backend status">checking backend…</div>
-  </header>
-
   <main>
-    <!-- 1 + 2: upload and chip selection -->
-    <section class="card" id="upload-card">
-      <h2>Scan a project</h2>
-      <form id="scan-form">
-        <label class="dropzone" id="dropzone">
-          <input type="file" id="file" accept=".zip,application/zip" hidden>
-          <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span id="file-label"><strong>Choose a .zip</strong> of a PlatformIO project, or drop it here</span>
-          <small>The archive is only read. ShipSafe never builds or runs uploaded code.</small>
-        </label>
-        <div class="controls">
-          <label>Chip profile
-            <select id="chip"><option value="">Auto-detect from platformio.ini</option></select>
-          </label>
-          <label>Registry metadata
-            <select id="registry">
-              <option value="online">Query PlatformIO Registry</option>
-              <option value="offline">Cached answers only (offline)</option>
-            </select>
-          </label>
-          <div class="buttons">
-            <button type="submit" id="scan-btn" class="primary" disabled>Scan project</button>
-            <button type="button" id="demo-btn" class="secondary">Scan demo project</button>
-          </div>
-        </div>
-        <p id="form-error" class="error" hidden></p>
-      </form>
+    <header>
+      <h1>SHIP<span>SAFE</span></h1>
+      <p>Pre-upload security check for ESP32 PlatformIO firmware. Upload a project ZIP; ShipSafe's security engine and ML model must both agree before the firmware is cleared for upload.</p>
+      <p id="health" class="muted">Checking backend…</p>
+    </header>
 
-      <div class="platforms">
-        <div class="platform-group">
-          <h3>Hardware validation — currently implemented</h3>
-          <ul class="platform-list implemented">
-            <li><span class="badge verified">Verified</span> <strong>ESP32-WROOM-32</strong> (original ESP32) <small>datasheet-backed GPIO profile</small></li>
-          </ul>
-          <p class="muted small-note">Dependency and security-pattern analysis run on any PlatformIO project. Hardware validation runs only for verified profiles; other targets are scanned with hardware checks reported as unavailable.</p>
-        </div>
+    <form id="scan-form" class="card">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="file" accept=".zip,application/zip" hidden>
+        <span id="file-label"><strong>Choose a .zip</strong> of a PlatformIO project, or drop it here</span>
+        <small>Uploaded code is only read, never built or run.</small>
+      </label>
+      <button type="submit" id="scan-btn" disabled>Scan project</button>
+      <p id="form-error" class="error" hidden></p>
+    </form>
 
-        <details class="roadmap" id="roadmap">
-          <summary>
-            <span>Platform roadmap</span>
-            <span class="badge planned">Planned · not selectable</span>
-          </summary>
-          <p class="muted small-note">ShipSafe is designed to grow beyond ESP32. The targets below are <strong>not implemented yet</strong>: they produce no hardware findings and cannot be selected as a chip profile.</p>
-          <ul class="platform-list planned" aria-label="Planned hardware support">
-            <li>ESP32-S2 <span class="badge planned">Planned</span></li>
-            <li>ESP32-S3 <span class="badge planned">Planned</span></li>
-            <li>ESP32-C3 <span class="badge planned">Planned</span></li>
-            <li>ESP32-C6 <span class="badge planned">Planned</span></li>
-            <li>ESP8266 <span class="badge planned">Planned</span></li>
-            <li>Arduino Uno / Mega / Nano <span class="badge planned">Planned</span></li>
-            <li>Raspberry Pi Pico / RP2040 <span class="badge planned">Planned</span></li>
-            <li>STM32 <span class="badge planned">Planned</span></li>
-            <li>Nordic nRF52 <span class="badge planned">Planned</span></li>
-            <li>Teensy <span class="badge planned">Planned</span></li>
-            <li>Other PlatformIO-supported targets <span class="badge planned">Planned</span></li>
-          </ul>
-        </details>
-      </div>
+    <section id="progress" class="card" hidden>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <p id="progress-text" class="muted"></p>
     </section>
 
-    <!-- 3: progress -->
-    <section class="card" id="progress-card" hidden>
-      <h2>Scan progress</h2>
-      <ol class="stepper" id="stepper"></ol>
-      <p class="muted" id="progress-text"></p>
-    </section>
-
-    <!-- 4-7: results -->
     <section id="results" hidden>
-      <div class="demo-banner" id="demo-banner" hidden>
-        DEMO PROJECT — the bundled sample in <code>samples/demo_project</code>, scanned live. It contains deliberate, harmless issues.
+      <div id="verdict" class="verdict">
+        <span id="verdict-text"></span>
+        <ul id="verdict-reasons"></ul>
+        <p id="gate" class="muted"></p>
       </div>
 
-      <div class="summary-grid">
-        <div class="tile score-tile">
-          <span class="tile-label">Review priority</span>
-          <div class="score-row"><span class="score" id="score">0</span><span class="score-max">/100</span></div>
-          <span class="pill" id="priority">NONE</span>
+      <div class="grid2">
+        <div class="card">
+          <h2>Main security engine</h2>
+          <p class="pill" id="main-status"></p>
+          <p class="muted" id="main-counts"></p>
+          <ul id="main-reasons"></ul>
         </div>
-        <div class="tile"><span class="tile-label">Dependencies scanned</span><span class="tile-value" id="t-deps">0</span><span class="tile-sub" id="t-deps-sub"></span></div>
-        <div class="tile"><span class="tile-label">Hardware findings</span><span class="tile-value" id="t-hw">0</span><span class="tile-sub" id="t-hw-sub"></span></div>
-        <div class="tile"><span class="tile-label">Security findings</span><span class="tile-value" id="t-sec">0</span><span class="tile-sub" id="t-sec-sub"></span></div>
-        <div class="tile"><span class="tile-label">Analysis coverage</span><span class="tile-value small" id="t-cov">COMPLETE</span><span class="tile-sub" id="t-cov-sub"></span></div>
+        <div class="card">
+          <h2>ML prediction</h2>
+          <p class="pill" id="ml-status"></p>
+          <div id="ml-probs"></div>
+          <p class="muted small" id="ml-note"></p>
+        </div>
       </div>
 
-      <section class="card">
-        <div class="card-head">
-          <h2>Why this score</h2>
-          <button class="ghost" id="download-btn" type="button">Download JSON report</button>
+      <div class="card">
+        <h2>Findings</h2>
+        <div id="findings"></div>
+      </div>
+
+      <div class="card">
+        <h2>ShipSafe vs. baseline</h2>
+        <div class="grid2">
+          <div><h3>ShipSafe</h3><p class="pill" id="cmp-ss"></p><ul id="cmp-ss-list"></ul></div>
+          <div><h3 id="cmp-bl-title">Baseline</h3><p class="pill" id="cmp-bl"></p><ul id="cmp-bl-list"></ul><p class="muted small" id="cmp-bl-note"></p></div>
         </div>
-        <p class="muted" id="statement"></p>
-        <ul class="reasons" id="incomplete"></ul>
-        <table class="table" id="contrib-table">
-          <thead><tr><th>Rule</th><th>Component</th><th>Severity</th><th>Findings</th><th>Points</th><th>Formula</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <p class="muted" id="no-contrib" hidden>No finding contributes points (INFO findings and unresolved checks score zero).</p>
-      </section>
-
-      <nav class="tabs" role="tablist">
-        <button role="tab" data-tab="report" class="active">Unified report</button>
-        <button role="tab" data-tab="deps">Dependency intelligence</button>
-        <button role="tab" data-tab="hw">Hardware</button>
-        <button role="tab" data-tab="sec">Security patterns</button>
-        <button role="tab" data-tab="issues">Scan issues <span class="count" id="issue-count">0</span></button>
-      </nav>
-
-      <section class="card tab-panel" data-panel="report">
-        <div class="filters">
-          <div class="chips" id="sev-filter"></div>
-          <label>Component
-            <select id="comp-filter">
-              <option value="">All components</option>
-              <option value="platformio_intelligence">PlatformIO intelligence</option>
-              <option value="hardware_intelligence">Hardware intelligence</option>
-              <option value="security_engine">Security engine</option>
-            </select>
-          </label>
-        </div>
-        <div id="report-list" class="findings"></div>
-      </section>
-
-      <section class="card tab-panel" data-panel="deps" hidden>
-        <div class="table-wrap">
-          <table class="table" id="dep-table">
-            <thead><tr><th>Package</th><th>Kind</th><th>Version</th><th>Registry metadata</th><th>Identity</th><th>Findings</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div id="dep-findings" class="findings"></div>
-      </section>
-
-      <section class="card tab-panel" data-panel="hw" hidden>
-        <div id="hw-unavailable" class="hw-unavailable" hidden>
-          <strong>Hardware validation unavailable for this target.</strong>
-          <span id="hw-unavailable-detail"></span>
-          <span>No hardware findings were produced, which is not the same as the hardware being safe. Dependency and security-pattern results above still apply.</span>
-        </div>
-        <div id="hw-meta" class="meta"></div>
-        <div class="table-wrap">
-          <table class="table" id="pin-table">
-            <thead><tr><th>GPIO</th><th>Used as</th><th>Capabilities (profile)</th><th>Locations</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div id="hw-findings" class="findings"></div>
-      </section>
-
-      <section class="card tab-panel" data-panel="sec" hidden>
-        <div id="sec-meta" class="meta"></div>
-        <div id="sec-findings" class="findings"></div>
-      </section>
-
-      <section class="card tab-panel" data-panel="issues" hidden>
-        <p class="muted">Problems that limited the analysis. An incomplete scan is never a clean bill of health.</p>
-        <div id="issue-list" class="issues"></div>
-        <h3>Parsed files</h3>
-        <div class="table-wrap">
-          <table class="table" id="file-table">
-            <thead><tr><th>File</th><th>Status</th><th>Errors</th><th>Stubbed headers</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="muted" id="context-note"></p>
-      </section>
-
-      <p class="disclaimer" id="disclaimer"></p>
+      </div>
     </section>
   </main>
-
-  <template id="finding-tpl">
-    <article class="finding">
-      <header>
-        <span class="sev"></span>
-        <span class="rule"></span>
-        <span class="cat"></span>
-        <span class="comp"></span>
-        <span class="conf"></span>
-      </header>
-      <h4 class="desc"></h4>
-      <p class="loc"></p>
-      <pre class="evidence"></pre>
-      <details>
-        <summary>Explanation &amp; recommendation</summary>
-        <p class="expl"></p>
-        <p class="rec"></p>
-      </details>
-    </article>
-  </template>
-
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

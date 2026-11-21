@@ -16,6 +16,76 @@ ShipSafe **never builds or runs uploaded code** (no `pio run`, no `extra_scripts
 LLM and no third-party scanner** for its verdicts, and **does not claim that a finding proves
 malware**. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it works.
 
+## Upload decision: security engine + ML model
+
+Every scan produces three separate, explainable results, and the backend enforces the last one:
+
+| Result | Source | Values |
+|---|---|---|
+| `main_engine_decision` | deterministic engine above | **RED** = confirmed HIGH/CRITICAL finding · **YELLOW** = MEDIUM or unresolved finding, or incomplete analysis · **GREEN** = complete, nothing above LOW |
+| `ml_prediction` | Random Forest (`models/shipsafe_model.joblib`) on 27 features ShipSafe extracts itself | GREEN / YELLOW / RED + class probabilities, or `unavailable` with the reason |
+| `decision` | [backend/decision.py](backend/decision.py) | **GREEN — READY TO UPLOAD** · **YELLOW — REVIEW REQUIRED** · **RED — UPLOAD BLOCKED** |
+
+Rules:
+
+* Main engine RED → **RED**. The ML model can never override a confirmed blocking finding.
+* ML RED + main engine YELLOW → **RED**. ML RED + main engine GREEN → **YELLOW** (disagreement, review).
+* Any other disagreement, unresolved finding, incomplete analysis, ML unavailable or failed inference → **YELLOW**.
+* **GREEN only when the analysis is complete, has no blocking or review findings, and ML also predicts GREEN.**
+* A failed scan returns `upload_allowed: false`.
+
+Enforcement: `POST /api/scan/{scan_id}/upload` returns **200 `{allowed: true}` only for GREEN**, and
+403 otherwise (409 while the scan is running). The webpage shows this gate's answer; it never decides
+on its own.
+
+### ML model (measured, not tuned to look good)
+
+* Data: `ml/esp32_synth_fw_dataset/`, 100 **synthetic** ESP32 projects with **synthetic** labels
+  (56 GREEN / 28 YELLOW / 16 RED, 26 scenarios).
+* Features: the 20 `f_*` source features and 7 `d_*` dependency features only. IDs, scenario, variant,
+  rationale, labels, `loc` and other metadata are excluded. The exact schema is in `models/feature_schema.json`.
+* ShipSafe's own extractor ([backend/ml/features.py](backend/ml/features.py)) reproduces the dataset's
+  feature values on **100/100** projects. At scan time the `d_*` features come from ShipSafe's PlatformIO
+  registry results, not from a manifest in the upload.
+* Validation: `GroupKFold(5)` grouped by `scenario_id`, so no scenario appears in both training and
+  validation. Out-of-fold results (`models/metrics.json`):
+
+  | | precision | recall | F1 | support |
+  |---|---|---|---|---|
+  | GREEN | 0.72 | 0.84 | 0.78 | 56 |
+  | YELLOW | 0.39 | 0.39 | 0.39 | 28 |
+  | RED | 0.14 | 0.06 | 0.09 | 16 |
+  | **accuracy 0.59 · macro F1 0.42** | | | | 100 |
+
+  Confusion matrix (rows = true, cols = predicted, order GREEN/YELLOW/RED): `[[47,9,0],[11,11,6],[7,8,1]]`.
+* What this means: on unseen scenarios the model is weak, and especially poor at RED. That is why it is
+  only a second opinion. It can stop a GREEN or escalate a review, but blocking findings come from the
+  deterministic engine.
+* Retrain: `python -m scripts.train_model`.
+
+### Baseline comparison
+
+The baseline is **our own LLM-only code-review service** (`shipsafe_baseline`, a separate FastAPI app).
+It is **not a third-party scanner**. When `SHIPSAFE_BASELINE_URL` is set, every scan also sends the same ZIP to
+`{URL}/api/v1/scan`. The page shows both results side by side, and ShipSafe maps the baseline's
+severities to a class (Critical/High → RED, Medium → YELLOW, else GREEN). The baseline never affects the
+upload decision. Without the URL, the comparison is shown as **unavailable** instead of being faked.
+
+Run it locally, here with Gemini through its OpenAI-compatible endpoint:
+
+```powershell
+cd ..\shipsafe_baseline
+$env:LLM_PROVIDER="openai"; $env:LLM_MODEL="gemini-3.5-flash-lite"
+$env:LLM_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai/"; $env:LLM_API_KEY="<your key>"
+python -m uvicorn app.main:app --port 8100
+# in the ShipSafe shell:
+$env:SHIPSAFE_BASELINE_URL="http://127.0.0.1:8100"
+```
+
+Example (bundled demo project): ShipSafe RED, 14 findings including hardware (HW001, HW008) and firmware
+rules. The baseline was RED with 6 findings and no hardware issues. On `tests/fixtures/hardware/gpio34_output`
+the baseline returned GREEN with no findings, while ShipSafe blocks it (GPIO34 is input-only).
+
 ---
 
 ## Why ShipSafe changed direction
@@ -91,7 +161,7 @@ With [uv](https://docs.astral.sh/uv/) instead: `uv sync` (uses `pyproject.toml` 
 Check the installation:
 
 ```powershell
-python -m pytest                      # 159 tests, no network access needed
+python -m pytest                      # 173 tests, no network access needed
 ```
 
 ## Run
@@ -127,6 +197,21 @@ curl.exe http://127.0.0.1:8000/api/scan/<scan_id>
 curl.exe -X POST http://127.0.0.1:8000/api/scan/demo
 ```
 
+## Deployment (Vercel frontend + Python backend)
+
+The Python backend (libclang, background scan jobs, in-memory scan store) is **not** a Vercel serverless
+app. Run it on any host that can run `uvicorn` (a VM, Render, Railway, Fly.io, or a laptop exposed through a tunnel):
+
+```powershell
+$env:SHIPSAFE_CORS_ORIGINS="https://<your-vercel-app>.vercel.app"
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+
+The static frontend deploys to Vercel with the root [vercel.json](vercel.json). In Vercel → Settings →
+Environment Variables, set `SHIPSAFE_API_URL` to the backend URL. The build writes it into
+`frontend/config.js`. No secret is ever placed in the frontend: LLM keys live only in the baseline
+service's environment.
+
 ## API
 
 | Method | Path | Purpose |
@@ -134,10 +219,11 @@ curl.exe -X POST http://127.0.0.1:8000/api/scan/demo
 | POST | `/api/scan` | multipart `file` (.zip), optional `chip` (profile id/alias, empty = auto), optional `registry` (`online`/`offline`). Returns `202 {scan_id, status}` |
 | POST | `/api/scan/demo` | scan the bundled demo project (report has `"demo": true`) |
 | GET | `/api/scan/{scan_id}` | status and stage; the full report once `status == "completed"` |
+| POST | `/api/scan/{scan_id}/upload` | backend upload gate: 200 only when `decision.status == "GREEN"`, else 403 |
 | GET | `/api/profiles` | chip profiles (`esp32_wroom_32` supported; S2/S3/C3/C6/H2 listed as unsupported) |
 | GET | `/api/health` | backend, Clang and rule-catalog status |
 
-The report contains `project`, `summary`, `package_results`, `hardware_results`,
+The report contains `decision`, `main_engine_decision`, `ml_prediction`, `baseline`, `project`, `summary`, `package_results`, `hardware_results`,
 `hardware_analysis`, `security_results`, `security_analysis`, `findings` (all components,
 unified format), `errors`, `risk_assessment`, `analysis` and `disclaimer`.
 
@@ -163,6 +249,9 @@ backend/
   project_loader.py      ZIP validation and safe extraction
   models.py              unified Finding / ScanIssue format
   risk_engine.py         explainable review-priority score
+  decision.py            combined upload decision (main engine + ML)
+  baseline_client.py     optional call to the LLM-only baseline service
+  ml/                    features.py (ShipSafe feature extractor), predict.py
   platformio/            Component A: ini_parser, registry_client, similarity, package_intel
   hardware/              Component B: profiles, checker
   ast_engine/            clang_parser, compile_context, ast_extractor, runner, stubs/
@@ -175,6 +264,8 @@ databases/
   reference/             team-provided DevKit V1 pin reference (cross-checked by tests)
 frontend/                index.html, styles.css, app.js
 samples/demo_project/    labelled demo project
+ml/esp32_synth_fw_dataset/ synthetic training dataset (100 projects + labels.csv)
+models/                  shipsafe_model.joblib, feature_schema.json, metrics.json
 scripts/                 database builders, similarity calibration, fixture generator
 tests/                   unit/, integration/, fixtures/
 docs/                    ARCHITECTURE.md, similarity_calibration.json

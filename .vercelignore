@@ -1,0 +1,8 @@
+.venv
+ml
+models
+tests
+samples
+databases
+backend
+scripts

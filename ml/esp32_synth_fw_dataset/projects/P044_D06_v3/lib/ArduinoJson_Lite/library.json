@@ -1,0 +1,17 @@
+{
+  "name": "ArduinoJson-Lite",
+  "version": "2.3.1",
+  "description": "Simple analog temperature helper",
+  "authors": [
+    {
+      "name": "Example Dev"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example-dev/ArduinoJson-Lite"
+  },
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

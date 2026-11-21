@@ -1,0 +1,13 @@
+[
+  {
+    "name": "calib_sync",
+    "publisher": "example-dev",
+    "publisher_verified": false,
+    "downloads": 242,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.2.0",
+    "has_author": true,
+    "vendored": true
+  }
+]

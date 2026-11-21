@@ -1,0 +1,13 @@
+[
+  {
+    "name": "adc_smoother",
+    "publisher": "example-dev",
+    "publisher_verified": false,
+    "downloads": 88,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "2.0.1",
+    "has_author": true,
+    "vendored": true
+  }
+]

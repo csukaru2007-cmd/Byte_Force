@@ -1,0 +1,17 @@
+{
+  "name": "tempcal",
+  "version": "1.0.0",
+  "description": "Simple analog temperature helper",
+  "authors": [
+    {
+      "name": "Example Dev"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example-dev/tempcal"
+  },
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

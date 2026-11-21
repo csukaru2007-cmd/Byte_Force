@@ -1,0 +1,20 @@
+{
+  "name": "sensor_calib0",
+  "version": "1.0.0",
+  "description": "Simple analog temperature helper",
+  "authors": [
+    {
+      "name": "Example Dev"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example-dev/sensor_calib0"
+  },
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "build": {
+    "extraScript": "extra_script.py"
+  }
+}

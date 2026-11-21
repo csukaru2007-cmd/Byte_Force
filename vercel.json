@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "echo static frontend only",
+  "buildCommand": "echo \"window.SHIPSAFE_API_BASE = \\\"$SHIPSAFE_API_URL\\\";\" > frontend/config.js",
+  "outputDirectory": "frontend"
+}

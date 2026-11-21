@@ -1,0 +1,93 @@
+{
+  "validation": "GroupKFold(n_splits=5) grouped by scenario_id (out-of-fold predictions for all rows)",
+  "samples": 100,
+  "scenarios": 25,
+  "class_counts": {
+    "GREEN": 56,
+    "YELLOW": 28,
+    "RED": 16
+  },
+  "accuracy": 0.59,
+  "macro_precision": 0.4196,
+  "macro_recall": 0.4315,
+  "macro_f1": 0.4189,
+  "per_class": {
+    "GREEN": {
+      "precision": 0.7231,
+      "recall": 0.8393,
+      "f1": 0.7769,
+      "support": 56
+    },
+    "YELLOW": {
+      "precision": 0.3929,
+      "recall": 0.3929,
+      "f1": 0.3929,
+      "support": 28
+    },
+    "RED": {
+      "precision": 0.1429,
+      "recall": 0.0625,
+      "f1": 0.087,
+      "support": 16
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "GREEN",
+      "YELLOW",
+      "RED"
+    ],
+    "rows_true_cols_pred": [
+      [
+        47,
+        9,
+        0
+      ],
+      [
+        11,
+        11,
+        6
+      ],
+      [
+        7,
+        8,
+        1
+      ]
+    ]
+  },
+  "report": "              precision    recall  f1-score   support\n\n       GREEN       0.72      0.84      0.78        56\n      YELLOW       0.39      0.39      0.39        28\n         RED       0.14      0.06      0.09        16\n\n    accuracy                           0.59       100\n   macro avg       0.42      0.43      0.42       100\nweighted avg       0.54      0.59      0.56       100\n",
+  "extractor_agreement": {
+    "projects": 100,
+    "projects_with_mismatch": 0,
+    "mismatches": []
+  },
+  "feature_importances": {
+    "f_external_input": 0.0987,
+    "f_http_plain_url": 0.0804,
+    "f_eval_exec": 0.0738,
+    "f_open_ota_port": 0.0667,
+    "d_min_log_downloads": 0.057,
+    "f_outbound_post": 0.0549,
+    "d_any_incomplete_meta": 0.0546,
+    "f_https_used": 0.0522,
+    "f_ota_present": 0.0521,
+    "f_exec_call": 0.0496,
+    "d_min_name_edit_dist": 0.0472,
+    "f_motor_camera_oled": 0.0337,
+    "f_hash_check": 0.0322,
+    "f_sensor_code": 0.0301,
+    "f_shell_true": 0.026,
+    "f_decode_obfuscation": 0.0256,
+    "f_wifi_cred_read": 0.0254,
+    "f_input_validation": 0.0252,
+    "d_n_deps": 0.0239,
+    "d_any_unverified": 0.0233,
+    "f_build_hook_exec": 0.0204,
+    "f_signature_check": 0.0182,
+    "d_any_vendored": 0.0103,
+    "f_auth_present": 0.0072,
+    "d_name_lookalike": 0.006,
+    "f_version_check": 0.0027,
+    "f_mqtt_auth": 0.0024
+  }
+}

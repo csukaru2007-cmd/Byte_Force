@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Adafruit SSD1306",
+    "publisher": "Adafruit",
+    "publisher_verified": true,
+    "downloads": 1900000,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.4.2",
+    "has_author": true,
+    "vendored": false
+  },
+  {
+    "name": "Adafruit GFX Library",
+    "publisher": "Adafruit",
+    "publisher_verified": true,
+    "downloads": 2800000,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.4.2",
+    "has_author": true,
+    "vendored": false
+  }
+]

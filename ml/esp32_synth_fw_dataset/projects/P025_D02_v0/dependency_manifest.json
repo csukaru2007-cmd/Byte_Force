@@ -1,0 +1,13 @@
+[
+  {
+    "name": "sensor_calib0",
+    "publisher": "example-dev",
+    "publisher_verified": false,
+    "downloads": 3847,
+    "has_repo": true,
+    "license": "MIT",
+    "version": "1.0.0",
+    "has_author": true,
+    "vendored": true
+  }
+]

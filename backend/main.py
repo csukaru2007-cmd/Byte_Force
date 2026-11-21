@@ -26,6 +26,12 @@ from backend.project_loader import ProjectError, cleanup, new_work_dir, save_upl
 
 app = FastAPI(title="ShipSafe", version="2.0.0",
               description="Explainable, hardware-aware security analysis for ESP32 PlatformIO projects")
+import os as _os
+from fastapi.middleware.cors import CORSMiddleware
+
+_origins = [o.strip() for o in _os.environ.get("SHIPSAFE_CORS_ORIGINS", "").split(",") if o.strip()]
+if _origins:   # e.g. the Vercel frontend URL; empty = same-origin only
+    app.add_middleware(CORSMiddleware, allow_origins=_origins, allow_methods=["GET", "POST"], allow_headers=["*"])
 app.state.store = scan_service.ScanStore()
 app.state.executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="scan")
 app.state.scan_options = {}       # tests inject e.g. a mocked registry client here
@@ -78,6 +84,22 @@ def get_scan(scan_id: str) -> JSONResponse:
     if record is None:
         raise HTTPException(status_code=404, detail="Unknown scan id (scans are kept in memory only).")
     return JSONResponse(record.to_dict())
+
+
+@app.post("/api/scan/{scan_id}/upload")
+def request_upload(scan_id: str) -> JSONResponse:
+    """Upload gate enforced by the backend: only a completed scan with a GREEN decision is allowed."""
+    record = app.state.store.get(scan_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Unknown scan id (scans are kept in memory only).")
+    if record.status not in ("completed", "failed"):
+        return JSONResponse({"allowed": False, "status": "PENDING", "text": "SCAN IN PROGRESS"}, status_code=409)
+    decision = (record.result or {}).get("decision") or {"status": "YELLOW", "text": "REVIEW REQUIRED",
+                                                         "reasons": ["No decision available."]}
+    allowed = record.status == "completed" and decision.get("status") == "GREEN"
+    body = {"allowed": allowed, "status": decision["status"], "text": decision.get("text"),
+            "reasons": decision.get("reasons", [])}
+    return JSONResponse(body, status_code=200 if allowed else 403)
 
 
 @app.get("/api/profiles")
