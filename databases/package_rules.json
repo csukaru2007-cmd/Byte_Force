@@ -1,0 +1,220 @@
+{
+  "component": "platformio_intelligence",
+  "version": "1.0",
+  "rules": [
+    {
+      "rule_id": "PKG001",
+      "category": "DEPENDENCY_IDENTITY",
+      "severity": "MEDIUM",
+      "default_confidence": "INDICATOR",
+      "description": "Package name closely resembles a trusted package but is not published by its verified publisher.",
+      "applies_to": [
+        "lib_deps registry entry",
+        "installed package",
+        "git/archive dependency name"
+      ],
+      "detection_condition": "similarity.best_match() returns relation confusable, edit, extra_words or missing_words, and the package owner is not a verified publisher of the matched trusted package. Severity by evidence strength: confusable HIGH, edit MEDIUM, extra_words/missing_words LOW.",
+      "requires_context": true,
+      "required_context": [
+        "trusted_packages.json",
+        "package owner (declared or from registry)"
+      ],
+      "explanation": "Typosquatting publishes a package whose name differs from a popular one by a character, a separator or an extra word. A similar name alone does not prove intent: many legitimate packages have similar names.",
+      "recommendation": "Compare the name character by character with the trusted package. If you meant the trusted package, declare it as owner/name with an exact version.",
+      "limitations": [
+        "Only packages in databases/trusted_packages.json are protected.",
+        "Short names (under 5 characters) are not compared by edit distance.",
+        "Legitimate packages with similar names by other publishers will also match.",
+        "Calibration on 1,152 real registry names near the trusted names: 23 packages from non-verified publishers matched a non-exact relation (6 edit, 17 extra_words, 0 missing_words); most are legitimate extension libraries. See docs/similarity_calibration.json."
+      ]
+    },
+    {
+      "rule_id": "PKG002",
+      "category": "DEPENDENCY_IDENTITY",
+      "severity": "HIGH",
+      "default_confidence": "INDICATOR",
+      "description": "Package has the same name as a trusted package but a different publisher.",
+      "applies_to": [
+        "lib_deps registry entry",
+        "installed package"
+      ],
+      "detection_condition": "Normalised package name equals a trusted package name or alias, and the owner is not the verified registry owner or an additional verified publisher.",
+      "requires_context": true,
+      "required_context": [
+        "trusted_packages.json",
+        "package owner"
+      ],
+      "explanation": "Forks and re-uploads under another account receive code from someone other than the verified upstream maintainer. Many forks are benign, but the code is not the code that was reviewed upstream.",
+      "recommendation": "Use the verified publisher (owner/name) unless you deliberately depend on this fork and have reviewed it.",
+      "limitations": [
+        "Maintainer changes or organisation moves that are not yet in trusted_packages.json will be reported."
+      ]
+    },
+    {
+      "rule_id": "PKG003",
+      "category": "DEPENDENCY_IDENTITY",
+      "severity": "MEDIUM",
+      "default_confidence": "DEFINITE",
+      "description": "Dependency does not exist in the PlatformIO Registry.",
+      "applies_to": [
+        "lib_deps registry entry"
+      ],
+      "detection_condition": "GET /v3/packages/<owner>/library/<name> returns 404, or a search finds no library with exactly this name.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "The build will fail today, and if someone later publishes a package with this name, PlatformIO would install that package. Names produced by mistakes or by AI code assistants are a known source of this problem.",
+      "recommendation": "Check the spelling and owner. Replace the entry with the package you actually need.",
+      "limitations": [
+        "Private registries and packages removed after the cache was filled are not distinguished."
+      ]
+    },
+    {
+      "rule_id": "PKG004",
+      "category": "DEPENDENCY_IDENTITY",
+      "severity": "MEDIUM",
+      "default_confidence": "DEFINITE",
+      "description": "Dependency is declared without an owner and several registry publishers use this name.",
+      "applies_to": [
+        "lib_deps registry entry without owner/"
+      ],
+      "detection_condition": "The entry has no owner and the registry search returns libraries with exactly this name from more than one owner (LOW when only one owner publishes it).",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Without owner/ the publisher is chosen at install time. The project does not state whose code it expects.",
+      "recommendation": "Declare the dependency as owner/name@version.",
+      "limitations": [
+        "ShipSafe does not reproduce PlatformIO's exact resolution order; it lists every exact-name publisher."
+      ]
+    },
+    {
+      "rule_id": "PKG005",
+      "category": "DEPENDENCY_METADATA",
+      "severity": "MEDIUM",
+      "default_confidence": "DEFINITE",
+      "description": "Pinned version is not published in the registry.",
+      "applies_to": [
+        "lib_deps registry entry with an exact version"
+      ],
+      "detection_condition": "The version is an exact number and is not in the package's 'versions' list returned by the registry.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "A version that was never published cannot be installed as written; it often indicates a mistyped or invented version.",
+      "recommendation": "Use a version listed by the registry.",
+      "limitations": [
+        "Version ranges (^, ~, >=) are not evaluated."
+      ]
+    },
+    {
+      "rule_id": "PKG006",
+      "category": "DEPENDENCY_METADATA",
+      "severity": "MEDIUM",
+      "default_confidence": "INDICATOR",
+      "description": "Source repository differs from the trusted package's upstream repository.",
+      "applies_to": [
+        "registry metadata repository_url",
+        "git dependency URL"
+      ],
+      "detection_condition": "The package name matches a trusted package, but the registry repository_url, or the git URL in lib_deps, does not point at the verified upstream repository.",
+      "requires_context": true,
+      "required_context": [
+        "trusted_packages.json"
+      ],
+      "explanation": "The code comes from a different repository than the one the trusted entry was verified against.",
+      "recommendation": "Confirm that the repository is the intended upstream, or switch to the verified package.",
+      "limitations": [
+        "Repository URLs are self-declared by publishers and may be stale after a project moves."
+      ]
+    },
+    {
+      "rule_id": "PKG007",
+      "category": "DEPENDENCY_METADATA",
+      "severity": "LOW",
+      "default_confidence": "DEFINITE",
+      "description": "Registry metadata is incomplete.",
+      "applies_to": [
+        "registry package metadata"
+      ],
+      "detection_condition": "The registry response has no repository_url, or no description.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Without a repository link the published code cannot be traced to a public source history.",
+      "recommendation": "Prefer packages that link to a public source repository, or review the package archive manually.",
+      "limitations": [
+        "Missing metadata is common for small legitimate packages."
+      ]
+    },
+    {
+      "rule_id": "PKG008",
+      "category": "ANALYSIS_COVERAGE",
+      "severity": "INFO",
+      "default_confidence": "UNRESOLVED",
+      "description": "Registry metadata could not be retrieved; identity checks are incomplete.",
+      "applies_to": [
+        "any registry dependency"
+      ],
+      "detection_condition": "The registry was unreachable, timed out, rate-limited the client or returned an invalid response, and no cached answer exists.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Unknown is not the same as safe. Name similarity against the trusted database still ran because it needs no network access.",
+      "recommendation": "Re-run the scan when the registry is reachable.",
+      "limitations": []
+    },
+    {
+      "rule_id": "PKG009",
+      "category": "DEPENDENCY_SOURCE",
+      "severity": "LOW",
+      "default_confidence": "DEFINITE",
+      "description": "Dependency is fetched from a URL instead of the registry.",
+      "applies_to": [
+        "git dependency",
+        "archive URL dependency"
+      ],
+      "detection_condition": "lib_deps, platform or platform_packages contains a git or archive URL. INFO when pinned to a commit or tag, LOW otherwise.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "URL dependencies carry no registry metadata. Without a commit or tag, every build may download different code.",
+      "recommendation": "Pin the URL to a commit hash or tag (#ref), or use the registry package.",
+      "limitations": [
+        "ShipSafe cannot tell a tag from a branch name; only commit hashes are fully immutable."
+      ]
+    },
+    {
+      "rule_id": "PKG010",
+      "category": "DEPENDENCY_METADATA",
+      "severity": "MEDIUM",
+      "default_confidence": "DEFINITE",
+      "description": "Installed package does not match the declared dependency.",
+      "applies_to": [
+        ".pio/libdeps/<env>/<package>/.piopm"
+      ],
+      "detection_condition": "The installed package's owner differs from the declared owner, or its registry ID differs from the trusted package's registry ID.",
+      "requires_context": true,
+      "required_context": [
+        ".pio/libdeps present in the upload"
+      ],
+      "explanation": "The code that was actually built is not the package that platformio.ini asks for.",
+      "recommendation": "Delete .pio/libdeps and reinstall, then compare the result.",
+      "limitations": [
+        "Only checked when the upload contains .pio/libdeps."
+      ]
+    },
+    {
+      "rule_id": "PKG011",
+      "category": "DEPENDENCY_SOURCE",
+      "severity": "INFO",
+      "default_confidence": "DEFINITE",
+      "description": "Local dependency: no registry metadata; its source code is analysed by the security engine.",
+      "applies_to": [
+        "file://, symlink:// or relative path dependency"
+      ],
+      "detection_condition": "lib_deps entry refers to a local folder.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Local code is not covered by registry identity checks.",
+      "recommendation": "Make sure the local folder is part of your reviewed source tree.",
+      "limitations": [
+        "Folders outside the uploaded archive cannot be analysed."
+      ]
+    }
+  ]
+}

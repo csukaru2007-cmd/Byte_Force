@@ -1,14 +1,24 @@
 [project]
 name = "shipsafe"
-version = "0.1.0"
-description = "ShipSafe: checks AI-generated ESP32 PlatformIO projects for vulnerable or impersonating dependencies"
+version = "2.0.0"
+description = "ShipSafe: explainable, hardware-aware security analysis for ESP32 PlatformIO projects"
 readme = "README.md"
 authors = [
     { name = "csukaru2007-cmd", email = "csukaru2007@gmail.com" }
 ]
 requires-python = ">=3.12"
+# Keep in sync with requirements.txt
 dependencies = [
-    "langchain-google-genai>=4.5.2",
-    "python-dotenv>=1.2.4",
-    "requests>=2.34.2",
+    "fastapi==0.165.0",
+    "uvicorn==0.54.0",
+    "python-multipart==0.0.34",
+    "requests==2.34.2",
+    "rapidfuzz==3.14.6",
+    "libclang==18.1.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+    "httpx==0.28.1",
 ]

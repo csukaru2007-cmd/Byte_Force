@@ -1,0 +1,136 @@
+{
+  "component": "hardware_intelligence",
+  "version": "1.0",
+  "rules": [
+    {
+      "rule_id": "HW001", "category": "HARDWARE_CONFIGURATION", "severity": "HIGH", "default_confidence": "DEFINITE",
+      "description": "Output requested on an input-only GPIO.",
+      "applies_to": ["gpio_operations with requirement 'output'"],
+      "detection_condition": "Constant GPIO argument resolves to a pin whose profile entry has input_only = true (GPIO34-39 on ESP32), and the operation drives the pin (pinMode OUTPUT/OPEN_DRAIN, digitalWrite, analogWrite, LEDC attach, gpio_set_direction output, UART TX, I2C SDA/SCL, SPI SCK/MOSI/SS).",
+      "requires_context": true, "required_context": ["selected chip profile"],
+      "explanation": "The pin has no output driver. Writing to it has no effect on the hardware, so the circuit will not behave as the code intends.",
+      "recommendation": "Move the output to a GPIO that supports output (see the profile's gpio table).",
+      "limitations": ["Only constant GPIO arguments are checked."]
+    },
+    {
+      "rule_id": "HW002", "category": "HARDWARE_CONFIGURATION", "severity": "HIGH", "default_confidence": "DEFINITE",
+      "description": "Flash-connected GPIO used as an ordinary GPIO.",
+      "applies_to": ["gpio_operations"],
+      "detection_condition": "Constant GPIO argument resolves to a pin marked flash_connected (GPIO6-11 on ESP32-WROOM-32).",
+      "requires_context": true, "required_context": ["selected module profile"],
+      "explanation": "These pins are wired to the module's SPI flash. Reconfiguring them interferes with code fetch from flash and typically crashes the device.",
+      "recommendation": "Do not use GPIO6-GPIO11 on ESP32-WROOM-32.",
+      "limitations": ["Applies to the module profile; bare-chip designs may wire flash differently."]
+    },
+    {
+      "rule_id": "HW003", "category": "HARDWARE_CONFIGURATION", "severity": "LOW", "default_confidence": "INDICATOR",
+      "description": "Strapping pin configured by the application.",
+      "applies_to": ["gpio_operations"],
+      "detection_condition": "Constant GPIO argument is a strapping pin. LOW when it is driven or given a pull resistor (MEDIUM for GPIO12/MTDI, which selects the flash voltage), INFO when only read.",
+      "requires_context": true, "required_context": ["selected chip profile", "requested operation"],
+      "explanation": "Strapping pins are sampled at reset. Using them after boot is allowed; the risk is external circuitry that holds the pin at a non-default level while the chip resets.",
+      "recommendation": "Make sure the attached circuit leaves the pin at its default level during reset, or use a non-strapping GPIO.",
+      "limitations": ["ShipSafe cannot see the schematic; it only knows how the firmware uses the pin."]
+    },
+    {
+      "rule_id": "HW004", "category": "HARDWARE_CONFIGURATION", "severity": "HIGH", "default_confidence": "DEFINITE",
+      "description": "GPIO number does not exist on the selected chip.",
+      "applies_to": ["gpio_operations"],
+      "detection_condition": "Constant GPIO argument is not in the profile's valid_gpio_numbers.",
+      "requires_context": true, "required_context": ["selected chip profile"],
+      "explanation": "There is no such GPIO; the call fails or acts on nothing.",
+      "recommendation": "Use a GPIO number that exists on the selected chip.",
+      "limitations": []
+    },
+    {
+      "rule_id": "HW005", "category": "HARDWARE_CONFIGURATION", "severity": "MEDIUM", "default_confidence": "DEFINITE",
+      "description": "GPIO exists on the chip but is not a pin of the selected module.",
+      "applies_to": ["gpio_operations"],
+      "detection_condition": "Constant GPIO argument has exposed_on_module = false (GPIO37/GPIO38 on ESP32-WROOM-32).",
+      "requires_context": true, "required_context": ["selected module profile"],
+      "explanation": "The signal cannot be connected to anything outside the module.",
+      "recommendation": "Use a GPIO that is a module pin.",
+      "limitations": []
+    },
+    {
+      "rule_id": "HW006", "category": "HARDWARE_CONFIGURATION", "severity": "HIGH", "default_confidence": "DEFINITE",
+      "description": "Peripheral function not supported on this GPIO.",
+      "applies_to": ["analogRead/analogReadMilliVolts", "dacWrite", "touchRead", "pinMode ANALOG"],
+      "detection_condition": "The operation needs an ADC, DAC or touch channel and the profile lists none for this GPIO.",
+      "requires_context": true, "required_context": ["selected chip profile"],
+      "explanation": "Only specific GPIOs are connected to the ADC, DAC and touch sensor (datasheet Table 2 and Table 11).",
+      "recommendation": "Use a GPIO that provides the required analog function.",
+      "limitations": []
+    },
+    {
+      "rule_id": "HW007", "category": "HARDWARE_CONFIGURATION", "severity": "MEDIUM", "default_confidence": "DEFINITE",
+      "description": "Internal pull resistor requested on a GPIO that has none.",
+      "applies_to": ["pinMode INPUT_PULLUP/INPUT_PULLDOWN", "gpio_pullup_en/gpio_pulldown_en/gpio_set_pull_mode"],
+      "detection_condition": "Constant GPIO argument has internal_pull_resistors = false (GPIO34-39).",
+      "requires_context": true, "required_context": ["selected chip profile"],
+      "explanation": "GPIO34-39 have no software-enabled pull-up or pull-down; the input floats unless an external resistor is fitted.",
+      "recommendation": "Add an external pull resistor or use another GPIO.",
+      "limitations": ["An external resistor on the board is not visible to ShipSafe."]
+    },
+    {
+      "rule_id": "HW008", "category": "HARDWARE_CONFIGURATION", "severity": "MEDIUM", "default_confidence": "INDICATOR",
+      "description": "ADC2 pin read in a project that uses Wi-Fi.",
+      "applies_to": ["analogRead/analogReadMilliVolts"],
+      "detection_condition": "Constant GPIO argument is an ADC2 channel and the project calls Wi-Fi APIs anywhere.",
+      "requires_context": true, "required_context": ["Wi-Fi usage detected in project code"],
+      "explanation": "ADC2 pins cannot be used when Wi-Fi is used (ESP-IDF). Readings fail while Wi-Fi is active.",
+      "recommendation": "Use an ADC1 pin (GPIO32-39) for analog input in Wi-Fi projects.",
+      "limitations": ["ShipSafe does not know whether Wi-Fi is active at the moment of the read."]
+    },
+    {
+      "rule_id": "HW009", "category": "HARDWARE_CONFIGURATION", "severity": "LOW", "default_confidence": "INDICATOR",
+      "description": "UART0 console pin reused as GPIO.",
+      "applies_to": ["gpio_operations on GPIO1/GPIO3"],
+      "detection_condition": "GPIO1 (U0TXD) or GPIO3 (U0RXD) is configured by a GPIO API. LOW when the project also uses Serial (UART0), INFO otherwise.",
+      "requires_context": true, "required_context": ["Serial usage detected"],
+      "explanation": "TXD and RXD are used for flashing and serial logging; reusing them conflicts with Serial output and can disturb programming.",
+      "recommendation": "Use another GPIO, or stop using Serial on UART0.",
+      "limitations": []
+    },
+    {
+      "rule_id": "HW010", "category": "HARDWARE_CONFIGURATION", "severity": "INFO", "default_confidence": "DEFINITE",
+      "description": "JTAG pin used as GPIO.",
+      "applies_to": ["gpio_operations on GPIO12-15"],
+      "detection_condition": "Constant GPIO argument is a JTAG signal pin (MTDI, MTCK, MTMS, MTDO). Reported once per pin.",
+      "requires_context": false, "required_context": [],
+      "explanation": "External JTAG debugging cannot use the pin while the firmware uses it. This is not evidence that a debug interface is exposed.",
+      "recommendation": "No action unless you rely on JTAG debugging.",
+      "limitations": []
+    },
+    {
+      "rule_id": "HW011", "category": "ANALYSIS_COVERAGE", "severity": "MEDIUM", "default_confidence": "DEFINITE",
+      "description": "Selected chip profile does not match the board in platformio.ini.",
+      "applies_to": ["platformio.ini board", "selected chip profile"],
+      "detection_condition": "The PlatformIO board's MCU (from the registry board list) differs from the MCU the profile describes.",
+      "requires_context": true, "required_context": ["databases/board_profiles.json"],
+      "explanation": "GPIO capabilities differ between ESP32 family members; results for the wrong profile may be wrong in both directions.",
+      "recommendation": "Select the chip profile that matches the board, or correct the board in platformio.ini.",
+      "limitations": ["Boards not in the registry board list cannot be checked."]
+    },
+    {
+      "rule_id": "HW012", "category": "ANALYSIS_COVERAGE", "severity": "INFO", "default_confidence": "UNRESOLVED",
+      "description": "GPIO argument is not a compile-time constant; it was not checked.",
+      "applies_to": ["gpio_operations"],
+      "detection_condition": "Clang could not constant-fold the GPIO argument (variable, function result, runtime input).",
+      "requires_context": false, "required_context": [],
+      "explanation": "The pin number is decided at run time, so ShipSafe reports it as unresolved instead of guessing valid or invalid.",
+      "recommendation": "Use constexpr/const pin definitions to make hardware checks possible.",
+      "limitations": ["No data-flow analysis is performed to find the value."]
+    },
+    {
+      "rule_id": "HW013", "category": "HARDWARE_CONFIGURATION", "severity": "LOW", "default_confidence": "INDICATOR",
+      "description": "Interrupt on GPIO36/GPIO39.",
+      "applies_to": ["attachInterrupt"],
+      "detection_condition": "attachInterrupt on GPIO36 or GPIO39.",
+      "requires_context": false, "required_context": [],
+      "explanation": "ESP-IDF advises not to use the interrupt of GPIO36 and GPIO39 when using ADC or Wi-Fi and Bluetooth with sleep mode enabled (ESP32 errata GPIO-3.11).",
+      "recommendation": "Use another GPIO for interrupts, or confirm the errata conditions do not apply.",
+      "limitations": ["Sleep-mode configuration is not analysed."]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "registry_names_compared": 1152,
+  "counts": {
+    "edit:other_publisher": 6,
+    "edit:verified_publisher": 4,
+    "exact:other_publisher": 26,
+    "exact:verified_publisher": 20,
+    "extra_words:other_publisher": 17,
+    "extra_words:verified_publisher": 3,
+    "no_relation": 1076
+  },
+  "examples": {
+    "edit:other_publisher": [
+      "pkourany/Adafruit_mfGFX ~ Adafruit GFX Library ('mf' added, score 0.917)",
+      "xreef/DHT12 sensor library ~ DHT sensor library ('12' added, score 0.9)",
+      "hmueller01/PubSubClient3 ~ PubSubClient ('3' added, score 0.96)",
+      "thingsboard/TBPubSubClient ~ PubSubClient ('tb' added, score 0.923)",
+      "tobozo/WiFiManagerTz ~ WiFiManager ('tz' added, score 0.917)",
+      "skaarj1989/mWebSockets ~ WebSockets ('m' added, score 0.952)"
+    ],
+    "edit:verified_publisher": [
+      "adafruit/Adafruit BME680 Library ~ Adafruit BME280 Library ('2' replaced by '6', score 0.929)",
+      "adafruit/Adafruit SSD1305 ~ Adafruit SSD1306 ('6' replaced by '5', score 0.933)",
+      "adafruit/Adafruit SSD1327 ~ Adafruit SSD1306 ('06' replaced by '27', score 0.867)",
+      "adafruit/Adafruit SSD1325 ~ Adafruit SSD1306 ('06' replaced by '25', score 0.867)"
+    ],
+    "exact:other_publisher": [
+      "mbed-tomasero/Adafruit_NeoPixel ~ Adafruit NeoPixel (same name after normalising case and separators, score 1.0)",
+      "etidbury/FastLED ~ FastLED (identical name, score 1.0)",
+      "jasonlzt/FastLED ~ FastLED (identical name, score 1.0)",
+      "mbed-marcpl/Adafruit-GFX ~ Adafruit GFX Library (same name after normalising case and separators, score 1.0)",
+      "mbed-eic-mbed/Adafruit-GFX ~ Adafruit GFX Library (same name after normalising case and separators, score 1.0)",
+      "hwspeedy/DHT-Sensor ~ DHT sensor library (same name after normalising case and separators, score 1.0)",
+      "mathieucarbou/ESPAsyncWebServer ~ ESPAsyncWebServer (identical name, score 1.0)",
+      "mathieucarbou/ESP Async WebServer ~ ESPAsyncWebServer (same name after normalising case and separators, score 1.0)"
+    ],
+    "exact:verified_publisher": [
+      "adafruit/Adafruit BME280 Library ~ Adafruit BME280 Library (identical name, score 1.0)",
+      "adafruit/Adafruit Unified Sensor ~ Adafruit Unified Sensor (identical name, score 1.0)",
+      "adafruit/DHT sensor library ~ DHT sensor library (identical name, score 1.0)",
+      "adafruit/Adafruit BusIO ~ Adafruit BusIO (identical name, score 1.0)",
+      "adafruit/Adafruit GFX Library ~ Adafruit GFX Library (identical name, score 1.0)",
+      "adafruit/Adafruit NeoPixel ~ Adafruit NeoPixel (identical name, score 1.0)",
+      "fastled/FastLED ~ FastLED (identical name, score 1.0)",
+      "adafruit/Adafruit SSD1306 ~ Adafruit SSD1306 (identical name, score 1.0)"
+    ],
+    "extra_words:other_publisher": [
+      "jorgen-vikinggod/FastLED GFX Library ~ FastLED ('gfx' added, score 0.824)",
+      "makerlabvn/MKL_DHT sensor library ~ DHT sensor library ('mkl' added, score 0.857)",
+      "stnkl/FastLEDHub ~ FastLED ('hub' added, score 0.824)",
+      "mishamyrt/FastLED-IO ~ FastLED ('io' added, score 0.875)",
+      "gitlab-vishal1695/FastLED_min ~ FastLED ('min' added, score 0.824)",
+      "ayushsharma82/RPAsyncTCP ~ AsyncTCP ('rp' added, score 0.889)",
+      "khoih-prog/AsyncTCP_SSL ~ AsyncTCP ('ssl' added, score 0.842)",
+      "syntaxharvy/HaCWifiManager ~ WiFiManager ('hac' added, score 0.88)"
+    ],
+    "extra_words:verified_publisher": [
+      "adafruit/Adafruit Sensor Lab ~ Adafruit Unified Sensor ('lab' added, score 0.903)",
+      "esp32async/ESPAsyncTCP ~ AsyncTCP ('esp' added, score 0.842)",
+      "me-no-dev/ESPAsyncTCP ~ AsyncTCP ('esp' added, score 0.842)"
+    ]
+  }
+}

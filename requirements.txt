@@ -1,0 +1,13 @@
+# ShipSafe runtime dependencies (Python 3.12)
+fastapi==0.165.0
+uvicorn==0.54.0
+python-multipart==0.0.34
+requests==2.34.2
+rapidfuzz==3.14.6
+# Python bindings + bundled libclang shared library (Clang 18 front end).
+# Provides the Clang AST without a separate LLVM install on Windows.
+libclang==18.1.1
+
+# Testing
+pytest==9.2.0
+httpx==0.28.1

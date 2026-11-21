@@ -1,0 +1,25 @@
+{
+  "_comment": "Input for scripts/verify_trusted_packages.py. Each entry is only written to databases/trusted_packages.json if the registry and GitHub checks pass. 'additional_publishers' are other registry owners of the same name that are accepted only when their registry repository_url points at the stated upstream repository.",
+  "packages": [
+    {"canonical_name": "Adafruit BME280 Library", "registry_owner": "adafruit", "repository": "https://github.com/adafruit/Adafruit_BME280_Library", "aliases": ["Adafruit_BME280", "Adafruit BME280"]},
+    {"canonical_name": "Adafruit Unified Sensor", "registry_owner": "adafruit", "repository": "https://github.com/adafruit/Adafruit_Sensor", "aliases": ["Adafruit_Sensor"]},
+    {"canonical_name": "Adafruit BusIO", "registry_owner": "adafruit", "repository": "https://github.com/adafruit/Adafruit_BusIO", "aliases": ["Adafruit_BusIO"]},
+    {"canonical_name": "Adafruit NeoPixel", "registry_owner": "adafruit", "repository": "https://github.com/adafruit/Adafruit_NeoPixel", "aliases": ["Adafruit_NeoPixel"]},
+    {"canonical_name": "Adafruit GFX Library", "registry_owner": "adafruit", "repository": "https://github.com/adafruit/Adafruit-GFX-Library", "aliases": ["Adafruit_GFX", "Adafruit GFX"]},
+    {"canonical_name": "Adafruit SSD1306", "registry_owner": "adafruit", "repository": "https://github.com/adafruit/Adafruit_SSD1306", "aliases": ["Adafruit_SSD1306"]},
+    {"canonical_name": "DHT sensor library", "registry_owner": "adafruit", "repository": "https://github.com/adafruit/DHT-sensor-library", "aliases": ["DHT_sensor_library", "DHT sensor"]},
+    {"canonical_name": "ArduinoJson", "registry_owner": "bblanchon", "repository": "https://github.com/bblanchon/ArduinoJson", "aliases": []},
+    {"canonical_name": "PubSubClient", "registry_owner": "knolleary", "repository": "https://github.com/knolleary/pubsubclient", "aliases": []},
+    {"canonical_name": "FastLED", "registry_owner": "fastled", "repository": "https://github.com/FastLED/FastLED", "aliases": []},
+    {"canonical_name": "TFT_eSPI", "registry_owner": "bodmer", "repository": "https://github.com/Bodmer/TFT_eSPI", "aliases": []},
+    {"canonical_name": "ESPAsyncWebServer", "registry_owner": "esp32async", "repository": "https://github.com/ESP32Async/ESPAsyncWebServer", "aliases": ["ESP Async WebServer"],
+     "additional_publishers": [{"registry_owner": "me-no-dev", "repository": "https://github.com/ESP32Async/ESPAsyncWebServer", "reason": "Original author's registry account; its registry repository_url points to the same ESP32Async upstream repository."}]},
+    {"canonical_name": "AsyncTCP", "registry_owner": "esp32async", "repository": "https://github.com/ESP32Async/AsyncTCP", "aliases": [],
+     "additional_publishers": [{"registry_owner": "me-no-dev", "repository": "https://github.com/ESP32Async/AsyncTCP", "reason": "Original author's registry account; its registry repository_url points to the same ESP32Async upstream repository."}]},
+    {"canonical_name": "WiFiManager", "registry_owner": "tzapu", "repository": "https://github.com/tzapu/WiFiManager", "aliases": []},
+    {"canonical_name": "NTPClient", "registry_owner": "arduino-libraries", "repository": "https://github.com/arduino-libraries/NTPClient", "aliases": []},
+    {"canonical_name": "OneWire", "registry_owner": "paulstoffregen", "repository": "https://github.com/PaulStoffregen/OneWire", "aliases": []},
+    {"canonical_name": "DallasTemperature", "registry_owner": "milesburton", "repository": "https://github.com/milesburton/Arduino-Temperature-Control-Library", "aliases": []},
+    {"canonical_name": "WebSockets", "registry_owner": "links2004", "repository": "https://github.com/Links2004/arduinoWebSockets", "aliases": ["arduinoWebSockets"]}
+  ]
+}

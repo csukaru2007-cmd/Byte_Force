@@ -1,0 +1,12 @@
+{
+  "_comment": "Libraries bundled inside the Arduino-ESP32 framework package. A lib_deps entry with one of these bare names resolves to the framework copy, not to a registry library. Lists are the directory names under libraries/ of espressif/arduino-esp32, read with the GitHub contents API.",
+  "framework": "arduino",
+  "platform": "espressif32",
+  "verified_on": "2026-11-21",
+  "sources": {
+    "3.x": "https://api.github.com/repos/espressif/arduino-esp32/contents/libraries?ref=master",
+    "2.0.17": "https://api.github.com/repos/espressif/arduino-esp32/contents/libraries?ref=2.0.17"
+  },
+  "libraries_3x": ["ArduinoOTA", "AsyncUDP", "BLE", "BLEAudio", "BluetoothSerial", "Console", "DNSServer", "EEPROM", "ESP32", "ESP_HostedOTA", "ESP_I2S", "ESP_NOW", "ESP_SR", "ESP_Video", "ESPmDNS", "Ethernet", "FFat", "FS", "HTTPClient", "HTTPUpdate", "HTTPUpdateServer", "Hash", "Insights", "LittleFS", "Matter", "NetBIOS", "Network", "NetworkClientSecure", "OpenThread", "PPP", "Preferences", "RainMaker", "SD", "SD_MMC", "SPI", "SPIFFS", "SimpleBLE", "Ticker", "USB", "Update", "WebServer", "WiFi", "WiFiProv", "Wire", "Zigbee"],
+  "libraries_2x": ["ArduinoOTA", "AsyncUDP", "BLE", "BluetoothSerial", "DNSServer", "EEPROM", "ESP32", "ESPmDNS", "Ethernet", "FFat", "FS", "HTTPClient", "HTTPUpdate", "HTTPUpdateServer", "I2S", "Insights", "LittleFS", "NetBIOS", "Preferences", "RainMaker", "SD", "SD_MMC", "SPI", "SPIFFS", "SimpleBLE", "Ticker", "USB", "Update", "WebServer", "WiFi", "WiFiClientSecure", "WiFiProv", "Wire"]
+}

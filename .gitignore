@@ -5,11 +5,13 @@ build/
 dist/
 wheels/
 *.egg-info
+.pytest_cache/
 
 # Virtual environments
 .venv
 .env
 
-# ShipSafe outputs
-cache.json
-report.json
+# ShipSafe runtime data
+.shipsafe_cache/
+.shipsafe_scans/
+samples/*.zip

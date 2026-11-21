@@ -1,0 +1,731 @@
+{
+  "component": "security_engine",
+  "version": "1.0",
+  "notes": "API names are matched against the declaration Clang resolved for each call: 'Class::method' matches when Class is the declaring class, the object's static type or one of its base classes; a bare name matches a free function. Detection logic lives in backend/security_engine/*_detector.py.",
+  "rules": [
+    {
+      "rule_id": "NET001",
+      "category": "NETWORK_BEHAVIOUR",
+      "severity": "INFO",
+      "default_confidence": "INDICATOR",
+      "description": "Network communication functionality detected.",
+      "applies_to": [
+        "function_calls",
+        "object_declarations"
+      ],
+      "detection_condition": "A function calls a network API (client connect/read/write, HTTP request, UDP packet, MQTT, sockets). One finding per function. INFO in project code and in dependencies whose stated purpose involves networking; LOW in dependencies whose purpose is unknown.",
+      "requires_context": true,
+      "required_context": [
+        "code origin (project or dependency)",
+        "dependency purpose from registry or library manifest"
+      ],
+      "explanation": "Networking is normal for IoT firmware. The finding documents where communication happens so it can be reviewed; it is not evidence of misuse.",
+      "recommendation": "Verify that this code needs the detected network communication.",
+      "limitations": [
+        "Calls through function pointers or callbacks are not resolved.",
+        "Network APIs not listed in this rule are not recognised."
+      ],
+      "detection": {
+        "network_classes": [
+          "Client",
+          "NetworkClient",
+          "WiFiClient",
+          "WiFiClientSecure",
+          "NetworkClientSecure",
+          "EthernetClient",
+          "HTTPClient",
+          "WiFiUDP",
+          "NetworkUDP",
+          "AsyncUDP",
+          "AsyncClient",
+          "PubSubClient",
+          "WebSocketsClient",
+          "WiFiServer",
+          "WebServer",
+          "AsyncWebServer"
+        ],
+        "network_methods": [
+          "connect",
+          "begin",
+          "GET",
+          "POST",
+          "PUT",
+          "PATCH",
+          "sendRequest",
+          "publish",
+          "subscribe",
+          "setServer",
+          "beginPacket",
+          "endPacket",
+          "write",
+          "print",
+          "println",
+          "printf",
+          "read",
+          "readBytes",
+          "readString",
+          "readStringUntil",
+          "getString",
+          "getStream",
+          "available",
+          "send",
+          "on"
+        ],
+        "network_functions": [
+          "socket",
+          "connect",
+          "send",
+          "sendto",
+          "recv",
+          "recvfrom",
+          "lwip_socket",
+          "lwip_connect",
+          "lwip_send",
+          "lwip_sendto",
+          "getaddrinfo",
+          "gethostbyname",
+          "esp_http_client_init",
+          "esp_http_client_perform",
+          "esp_http_client_read",
+          "esp_http_client_write"
+        ]
+      }
+    },
+    {
+      "rule_id": "NET002",
+      "category": "NETWORK_BEHAVIOUR",
+      "severity": "MEDIUM",
+      "default_confidence": "INDICATOR",
+      "description": "Dependency performs network communication that its stated purpose does not explain.",
+      "applies_to": [
+        "function_calls in dependency code"
+      ],
+      "detection_condition": "NET001 conditions hold in dependency code, and the package's registry description/keywords or library manifest is available and contains no networking term (wifi, network, http, mqtt, web, cloud, iot, ...).",
+      "requires_context": true,
+      "required_context": [
+        "dependency purpose from registry metadata or library.properties/library.json"
+      ],
+      "explanation": "A sensor or display driver that opens network connections sends or receives data the application author may not expect.",
+      "recommendation": "Review this dependency's network code and confirm why it communicates, or replace the dependency.",
+      "limitations": [
+        "Purpose matching uses keywords and can miss networking features described in other words."
+      ]
+    },
+    {
+      "rule_id": "NET003",
+      "category": "NETWORK_BEHAVIOUR",
+      "severity": "INFO",
+      "default_confidence": "INDICATOR",
+      "description": "Hard-coded remote endpoint passed to a network call.",
+      "applies_to": [
+        "function_calls arguments",
+        "string_literals"
+      ],
+      "detection_condition": "A network call receives a constant host name, IP address or URL. INFO in project code (endpoint inventory), MEDIUM in dependency code.",
+      "requires_context": true,
+      "required_context": [
+        "network call",
+        "constant argument value"
+      ],
+      "explanation": "The destination is fixed in the firmware. In application code this is usually intentional; in a library it means the library decides where data goes.",
+      "recommendation": "Confirm that the endpoint is expected and owned by you or a trusted service.",
+      "limitations": [
+        "Endpoints built at run time (string concatenation, configuration) are not resolved."
+      ],
+      "detection": {
+        "endpoint_methods": [
+          "connect",
+          "begin",
+          "setServer",
+          "beginPacket",
+          "update",
+          "getaddrinfo",
+          "gethostbyname"
+        ]
+      }
+    },
+    {
+      "rule_id": "NET004",
+      "category": "NETWORK_BEHAVIOUR",
+      "severity": "LOW",
+      "default_confidence": "DEFINITE",
+      "description": "Unencrypted protocol URL used for network communication.",
+      "applies_to": [
+        "function_calls arguments"
+      ],
+      "detection_condition": "A constant http://, ws:// or mqtt:// URL is passed to a network call.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Data sent over plain HTTP/WS/MQTT can be read and modified by anyone on the path.",
+      "recommendation": "Use https://, wss:// or mqtts:// with certificate verification.",
+      "limitations": [
+        "Plain TCP connections without a URL scheme are not classified."
+      ]
+    },
+    {
+      "rule_id": "NET005",
+      "category": "NETWORK_BEHAVIOUR",
+      "severity": "MEDIUM",
+      "default_confidence": "DEFINITE",
+      "description": "TLS certificate verification disabled.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "setInsecure() is called on a WiFiClientSecure/NetworkClientSecure object.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Without certificate verification the device accepts any server, so the connection is open to interception.",
+      "recommendation": "Load the server's CA certificate with setCACert() instead of setInsecure().",
+      "limitations": []
+    },
+    {
+      "rule_id": "CRED001",
+      "category": "CREDENTIAL_EXPOSURE",
+      "severity": "MEDIUM",
+      "default_confidence": "INDICATOR",
+      "description": "Potential hardcoded credential detected in source code.",
+      "applies_to": [
+        "variable_declarations",
+        "macro_definitions",
+        "function_calls arguments"
+      ],
+      "detection_condition": "A string literal that is not empty or a placeholder is (a) assigned to a variable or macro whose name indicates a secret (password, pass, pwd, secret, token, api_key, auth, psk, private_key), or (b) passed in a credential position of a known API (WiFi.begin password, WiFi.softAP password, MQTT connect user/password, HTTPClient::setAuthorization, ArduinoOTA.setPassword, WebServer::authenticate, setPreSharedKey).",
+      "requires_context": true,
+      "required_context": [
+        "identifier name or API argument position",
+        "placeholder filter"
+      ],
+      "explanation": "Secrets in source code end up in version control and in the firmware image, where they can be extracted from the flash.",
+      "recommendation": "Provision secrets at run time (NVS/Preferences, provisioning, secure storage) and rotate any secret that was committed.",
+      "limitations": [
+        "Secrets with non-descriptive names passed through unknown APIs are not recognised.",
+        "Values are redacted in the report; only the first two characters and the length are shown."
+      ],
+      "detection": {
+        "credential_name_pattern": "(?i)(^|_|[a-z])(pass(word|wd|phrase)?|pwd|secret|token|api_?key|apikey|auth|credential|private_?key|access_?key|psk)($|_|[A-Z0-9])",
+        "non_secret_name_pattern": "(?i)(hint|prompt|label|len|length|size|field|placeholder|url|endpoint|path|topic|header)",
+        "placeholder_pattern": "(?i)^(|\\*+|x+|\\.+|-+|password|pass|secret|changeme|change_me|your[_ -].*|<.*>|\\{.*\\}|todo|tbd|replace.*|insert.*|enter.*|example|dummy|none|null|admin)$",
+        "credential_apis": {
+          "WiFiClass::begin": [
+            1
+          ],
+          "WiFiSTAClass::begin": [
+            1
+          ],
+          "WiFiClass::softAP": [
+            1
+          ],
+          "WiFiAPClass::softAP": [
+            1
+          ],
+          "PubSubClient::connect": [
+            1,
+            2
+          ],
+          "HTTPClient::setAuthorization": [
+            0,
+            1
+          ],
+          "ArduinoOTAClass::setPassword": [
+            0
+          ],
+          "ArduinoOTAClass::setPasswordHash": [
+            0
+          ],
+          "WebServer::authenticate": [
+            1
+          ],
+          "WiFiClientSecure::setPreSharedKey": [
+            1
+          ],
+          "NetworkClientSecure::setPreSharedKey": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "CRED002",
+      "category": "CREDENTIAL_EXPOSURE",
+      "severity": "HIGH",
+      "default_confidence": "INDICATOR",
+      "description": "String literal matches a known secret or private-key format.",
+      "applies_to": [
+        "string_literals"
+      ],
+      "detection_condition": "A string literal matches one of the documented token formats (AWS access key id, GitHub token, Slack token, Stripe key, Google API key, JWT, PEM private key).",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "These formats are issued by services as credentials; a literal in this format is very likely a real or test secret.",
+      "recommendation": "Remove the secret from source code and revoke it at the issuing service.",
+      "limitations": [
+        "Only the listed formats are recognised."
+      ],
+      "detection": {
+        "secret_patterns": {
+          "AWS access key id": "\\b(AKIA|ASIA)[0-9A-Z]{16}\\b",
+          "GitHub token": "\\bgh[pousr]_[A-Za-z0-9]{36,}\\b",
+          "Slack token": "\\bxox[abprs]-[A-Za-z0-9-]{10,}",
+          "Stripe key": "\\b[sr]k_(live|test)_[0-9A-Za-z]{16,}",
+          "Google API key": "\\bAIza[0-9A-Za-z_-]{35}\\b",
+          "JSON Web Token": "\\beyJ[A-Za-z0-9_-]{8,}\\.eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}",
+          "PEM private key": "-----BEGIN ([A-Z]+ )?PRIVATE KEY-----"
+        }
+      }
+    },
+    {
+      "rule_id": "CRED003",
+      "category": "CREDENTIAL_EXPOSURE",
+      "severity": "MEDIUM",
+      "default_confidence": "INDICATOR",
+      "description": "Credential written to log output.",
+      "applies_to": [
+        "function_calls arguments"
+      ],
+      "detection_condition": "A logging call (Serial/Print print, println, printf, log_*, esp_log_write, printf) receives a variable or macro whose name indicates a secret, or a value already identified as a hardcoded credential.",
+      "requires_context": true,
+      "required_context": [
+        "credential-like identifier or known credential value"
+      ],
+      "explanation": "Serial and log output is readable by anyone with physical access or log collection; secrets printed there are disclosed.",
+      "recommendation": "Never print secrets; log a masked value or a success/failure flag instead.",
+      "limitations": [
+        "Secrets copied into other variables before printing are only followed within the same function."
+      ],
+      "detection": {
+        "log_methods": [
+          "Print::print",
+          "Print::println",
+          "Print::printf",
+          "Print::write"
+        ],
+        "log_functions": [
+          "printf",
+          "puts",
+          "log_printf",
+          "esp_log_write",
+          "ets_printf"
+        ]
+      }
+    },
+    {
+      "rule_id": "CRED004",
+      "category": "CREDENTIAL_EXPOSURE",
+      "severity": "LOW",
+      "default_confidence": "INDICATOR",
+      "description": "Secret-like value in a URL query string.",
+      "applies_to": [
+        "string_literals"
+      ],
+      "detection_condition": "A URL literal contains a query parameter named like a secret (token, key, apikey, password, secret, auth) with a non-placeholder value.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Query strings are stored in server and proxy logs and are visible in clear text over HTTP.",
+      "recommendation": "Send credentials in a header over TLS, and keep them out of source code.",
+      "limitations": []
+    },
+    {
+      "rule_id": "EXEC001",
+      "category": "DYNAMIC_EXECUTION",
+      "severity": "MEDIUM",
+      "default_confidence": "INDICATOR",
+      "description": "Interface that executes or loads code at run time.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "A call to a command execution, dynamic loading, ELF loading or embedded script interpreter API. Raised by one level in a dependency whose stated purpose is not scripting or plugin loading.",
+      "requires_context": true,
+      "required_context": [
+        "code origin",
+        "dependency purpose"
+      ],
+      "explanation": "Code that is loaded or interpreted at run time is not part of the reviewed firmware image; its behaviour depends on data the device receives or stores.",
+      "recommendation": "Confirm where the executed code comes from and that it is authenticated before it runs.",
+      "limitations": [
+        "Interpreters not listed here are not recognised."
+      ],
+      "detection": {
+        "execution_functions": [
+          "system",
+          "popen",
+          "execl",
+          "execlp",
+          "execv",
+          "execve",
+          "execvp",
+          "dlopen",
+          "dlsym",
+          "esp_elf_init",
+          "esp_elf_relocate",
+          "esp_elf_request",
+          "elf_load",
+          "luaL_loadstring",
+          "luaL_loadbuffer",
+          "luaL_loadbufferx",
+          "luaL_dostring",
+          "luaL_dofile",
+          "lua_load",
+          "duk_peval_string",
+          "duk_eval_string",
+          "duk_pcompile_string",
+          "duk_peval_lstring",
+          "js_eval",
+          "mjs_exec",
+          "mjs_exec_buf",
+          "be_loadstring",
+          "be_loadbuffer",
+          "mp_embed_exec_str"
+        ]
+      }
+    },
+    {
+      "rule_id": "EXEC002",
+      "category": "DYNAMIC_EXECUTION",
+      "severity": "HIGH",
+      "default_confidence": "INDICATOR",
+      "description": "Network-received data reaches an execution interface.",
+      "applies_to": [
+        "function_calls",
+        "variable_declarations",
+        "assignments",
+        "function_pointer_casts"
+      ],
+      "detection_condition": "Within one function, a value produced by a network read (Client::read, HTTPClient::getString, WebServer::arg, recv, ...) flows through variables into an EXEC001 interface or into a data-to-function-pointer cast.",
+      "requires_context": true,
+      "required_context": [
+        "intra-procedural data flow"
+      ],
+      "explanation": "Executing data received from the network lets whoever controls that data run code on the device.",
+      "recommendation": "Do not execute received data. If remote logic is required, authenticate and sandbox it.",
+      "limitations": [
+        "Data flow is tracked only inside a single function, through plain variable assignments."
+      ],
+      "detection": {
+        "network_sources": {
+          "Client::read": "arg:0",
+          "NetworkClient::read": "arg:0",
+          "Stream::readBytes": "arg:0",
+          "WiFiUDP::read": "arg:0",
+          "Stream::readString": "return",
+          "Stream::readStringUntil": "return",
+          "HTTPClient::getString": "return",
+          "WebServer::arg": "return",
+          "recv": "arg:1",
+          "recvfrom": "arg:1",
+          "esp_http_client_read": "arg:1"
+        }
+      }
+    },
+    {
+      "rule_id": "EXEC003",
+      "category": "DYNAMIC_EXECUTION",
+      "severity": "HIGH",
+      "default_confidence": "INDICATOR",
+      "description": "Data buffer converted to a function pointer.",
+      "applies_to": [
+        "function_pointer_casts"
+      ],
+      "detection_condition": "A cast whose target type is a pointer to function and whose operand is a data pointer or array.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Treating data as code is how injected or downloaded machine code is run. Legitimate uses (bootloaders, JIT) are rare in application firmware.",
+      "recommendation": "Explain and document why data is executed; otherwise remove the cast.",
+      "limitations": [
+        "Conversions through unions or memcpy are not detected."
+      ]
+    },
+    {
+      "rule_id": "FW001",
+      "category": "FIRMWARE_OPERATIONS",
+      "severity": "INFO",
+      "default_confidence": "INDICATOR",
+      "description": "Firmware update capability present.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "A call to an OTA/update API (Update, HTTPUpdate, ArduinoOTA, esp_ota_*, esp_https_ota). INFO in project code; MEDIUM in a dependency whose stated purpose does not involve OTA/updates.",
+      "requires_context": true,
+      "required_context": [
+        "code origin",
+        "dependency purpose"
+      ],
+      "explanation": "OTA updates are a normal maintenance feature. The finding records the update path so that its authentication and transport can be reviewed.",
+      "recommendation": "Make sure updates are authenticated (signed images or authenticated transport).",
+      "limitations": [],
+      "detection": {
+        "update_apis": [
+          "UpdateClass::begin",
+          "UpdateClass::write",
+          "UpdateClass::writeStream",
+          "UpdateClass::end",
+          "HTTPUpdate::update",
+          "HTTPUpdate::updateSpiffs",
+          "ArduinoOTAClass::begin",
+          "esp_ota_begin",
+          "esp_ota_write",
+          "esp_ota_end",
+          "esp_https_ota",
+          "esp_https_ota_begin"
+        ]
+      }
+    },
+    {
+      "rule_id": "FW002",
+      "category": "FIRMWARE_OPERATIONS",
+      "severity": "MEDIUM",
+      "default_confidence": "INDICATOR",
+      "description": "Network OTA enabled without a password.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "ArduinoOTA.begin() is called and no ArduinoOTA.setPassword()/setPasswordHash() call exists in the analysed code.",
+      "requires_context": true,
+      "required_context": [
+        "all ArduinoOTA calls in the project"
+      ],
+      "explanation": "Anyone on the local network can then upload firmware to the device.",
+      "recommendation": "Call ArduinoOTA.setPassword() or setPasswordHash() before ArduinoOTA.begin().",
+      "limitations": [
+        "A password set in code that was not parsed (parse errors, excluded files) is not seen."
+      ]
+    },
+    {
+      "rule_id": "FW003",
+      "category": "FIRMWARE_OPERATIONS",
+      "severity": "HIGH",
+      "default_confidence": "INDICATOR",
+      "description": "Firmware downloaded without transport security.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "HTTPUpdate::update/updateSpiffs receives a constant http:// URL, or its client object had setInsecure() called in the same function.",
+      "requires_context": true,
+      "required_context": [
+        "URL scheme",
+        "client configuration in the same function"
+      ],
+      "explanation": "An attacker on the network path can replace the downloaded firmware unless images are signed and verified.",
+      "recommendation": "Download updates over HTTPS with certificate verification, and enable signed images.",
+      "limitations": [
+        "Image signature verification (secure boot / signed OTA) is not detected and may mitigate this."
+      ]
+    },
+    {
+      "rule_id": "FW004",
+      "category": "FIRMWARE_OPERATIONS",
+      "severity": "LOW",
+      "default_confidence": "INDICATOR",
+      "description": "Raw flash write or erase operation.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "A call that writes or erases flash directly (esp_flash_*, spi_flash_*, esp_partition_write/erase_range, ESP.flashWrite/flashEraseSector). Raised by one level in a dependency whose purpose does not involve storage or flash.",
+      "requires_context": true,
+      "required_context": [
+        "code origin",
+        "dependency purpose"
+      ],
+      "explanation": "Direct flash access can overwrite application, bootloader or configuration data if offsets are wrong or attacker-controlled.",
+      "recommendation": "Prefer the partition, NVS or filesystem APIs and validate offsets.",
+      "limitations": [],
+      "detection": {
+        "flash_apis": [
+          "esp_flash_write",
+          "esp_flash_erase_region",
+          "esp_flash_erase_chip",
+          "spi_flash_write",
+          "spi_flash_erase_sector",
+          "spi_flash_erase_range",
+          "esp_partition_write",
+          "esp_partition_erase_range",
+          "EspClass::flashWrite",
+          "EspClass::flashEraseSector",
+          "EspClass::partitionWrite",
+          "EspClass::partitionEraseRange"
+        ],
+        "write_sinks": [
+          "UpdateClass::write",
+          "esp_ota_write",
+          "esp_flash_write",
+          "spi_flash_write",
+          "esp_partition_write",
+          "EspClass::flashWrite",
+          "EspClass::partitionWrite"
+        ]
+      }
+    },
+    {
+      "rule_id": "FW005",
+      "category": "FIRMWARE_OPERATIONS",
+      "severity": "HIGH",
+      "default_confidence": "DEFINITE",
+      "description": "Permanent eFuse or boot-security change.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "A call that burns eFuses or permanently enables/changes secure boot or flash encryption.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "eFuses are one-time programmable (datasheet section 3); a wrong value can permanently disable features or brick the device.",
+      "recommendation": "Keep eFuse programming in a dedicated, reviewed provisioning tool, not in application firmware.",
+      "limitations": [],
+      "detection": {
+        "efuse_apis": [
+          "esp_efuse_write_field_bit",
+          "esp_efuse_write_field_blob",
+          "esp_efuse_write_field_cnt",
+          "esp_efuse_write_block",
+          "esp_efuse_write_reg",
+          "esp_efuse_burn_new_values",
+          "esp_efuse_set_read_protect",
+          "esp_efuse_set_write_protect",
+          "esp_secure_boot_permanently_enable",
+          "esp_flash_encrypt_contents"
+        ]
+      }
+    },
+    {
+      "rule_id": "FW006",
+      "category": "FIRMWARE_OPERATIONS",
+      "severity": "LOW",
+      "default_confidence": "INDICATOR",
+      "description": "Boot partition changed outside a completed OTA update.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "esp_ota_set_boot_partition() is called in a function that does not also complete an OTA write (esp_ota_end / Update.end).",
+      "requires_context": true,
+      "required_context": [
+        "other calls in the same function"
+      ],
+      "explanation": "Selecting a different boot image outside the update flow changes which firmware runs after the next reset.",
+      "recommendation": "Switch boot partitions only after a verified update has completed.",
+      "limitations": [
+        "OTA flows split across several functions are reported."
+      ]
+    },
+    {
+      "rule_id": "FW007",
+      "category": "FIRMWARE_OPERATIONS",
+      "severity": "LOW",
+      "default_confidence": "INDICATOR",
+      "description": "Debugging interface used by the firmware.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "A call that starts a debug stub or reads/erases a core dump (esp_gdbstub_init, esp_core_dump_image_get, esp_core_dump_image_erase).",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Debug interfaces and core dumps can expose memory contents, including secrets, in production devices.",
+      "recommendation": "Disable debug interfaces in production builds.",
+      "limitations": [
+        "JTAG enabled by hardware/eFuse configuration is not visible in source code."
+      ],
+      "detection": {
+        "debug_apis": [
+          "esp_gdbstub_init",
+          "esp_core_dump_image_get",
+          "esp_core_dump_image_erase",
+          "esp_apptrace_write"
+        ]
+      }
+    },
+    {
+      "rule_id": "OBF001",
+      "category": "OBFUSCATION_INDICATORS",
+      "severity": "INFO",
+      "default_confidence": "INDICATOR",
+      "description": "Large encoded string literal.",
+      "applies_to": [
+        "string_literals"
+      ],
+      "detection_condition": "A string literal of at least 128 characters consisting of Base64 or hexadecimal characters only.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Encoded blobs hide their content from code review. On their own they are common (certificates, images, test vectors).",
+      "recommendation": "Document what the data is, or store it in a reviewable form.",
+      "limitations": [
+        "Other encodings (XOR, custom alphabets, compression) are not recognised."
+      ],
+      "detection": {
+        "min_length": 128
+      }
+    },
+    {
+      "rule_id": "OBF002",
+      "category": "OBFUSCATION_INDICATORS",
+      "severity": "INFO",
+      "default_confidence": "INDICATOR",
+      "description": "Large embedded byte array.",
+      "applies_to": [
+        "array_initializers"
+      ],
+      "detection_condition": "An array initializer with at least 512 integer elements.",
+      "requires_context": false,
+      "required_context": [],
+      "explanation": "Fonts, images and certificates are often embedded this way; the content cannot be reviewed as source code.",
+      "recommendation": "Document the origin of the data.",
+      "limitations": [],
+      "detection": {
+        "min_elements": 512
+      }
+    },
+    {
+      "rule_id": "OBF003",
+      "category": "OBFUSCATION_INDICATORS",
+      "severity": "MEDIUM",
+      "default_confidence": "INDICATOR",
+      "description": "Decoding and a sensitive operation occur in the same function.",
+      "applies_to": [
+        "function_calls"
+      ],
+      "detection_condition": "One function calls a decoding API and also a sensitive operation (code execution/loading, data-to-code cast, flash/firmware write), but no data flow between them was established.",
+      "requires_context": true,
+      "required_context": [
+        "calls in the same function"
+      ],
+      "explanation": "Decoding immediately before executing or writing firmware is a pattern used to hide payloads; the combination deserves review even when the data path is not visible.",
+      "recommendation": "Check what is decoded and where it goes.",
+      "limitations": [
+        "Co-occurrence only; the decoded data may be unrelated to the sensitive operation."
+      ],
+      "detection": {
+        "decode_apis": {
+          "mbedtls_base64_decode": "arg:0",
+          "base64_decode": "arg:0",
+          "b64_decode": "arg:0",
+          "decode_base64": "arg:0",
+          "base64::decode": "return",
+          "rbase64::decode": "return",
+          "unhexlify": "arg:0",
+          "hex2bin": "arg:0",
+          "uncompress": "arg:0",
+          "inflate": "arg:0"
+        }
+      }
+    },
+    {
+      "rule_id": "OBF004",
+      "category": "OBFUSCATION_INDICATORS",
+      "severity": "HIGH",
+      "default_confidence": "INDICATOR",
+      "description": "Encoded or decoded data flows into a sensitive operation.",
+      "applies_to": [
+        "function_calls",
+        "variable_declarations",
+        "assignments"
+      ],
+      "detection_condition": "Within one function, data from a large encoded literal, a large embedded array or a decoding call reaches a code execution/loading call, a data-to-code cast or a flash/firmware write.",
+      "requires_context": true,
+      "required_context": [
+        "intra-procedural data flow",
+        "OBF001/OBF002 data or decode call"
+      ],
+      "explanation": "Writing or executing data that was hidden in encoded form is a strong indicator that behaviour was deliberately concealed from review.",
+      "recommendation": "Decode the data offline and review it before trusting this code.",
+      "limitations": [
+        "Data flow is tracked only inside a single function."
+      ]
+    }
+  ]
+}
